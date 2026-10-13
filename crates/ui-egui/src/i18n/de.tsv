@@ -4094,4 +4094,14 @@ theme	Appearance	Erscheinungsbild
 	Set Feature Properties	Befund-Eigenschaften festlegen
 	Slope Hachure Tool	Böschungsschraffen-Werkzeug
 	Spot Height Tool	Höhenpunkt-Werkzeug
+	Add Hearth / Burnt Clay Section	Feuerstelle-/Brandlehmprofil hinzufügen
+	Add Stratum Badge	Schichtnummern-Badge hinzufügen
+	Add Stratum Boundary Line	Schichtgrenzlinie hinzufügen
+	Calculate Section Metrics	Profilmaße berechnen
+	Generate Strata Explanation Table	Dreilinien-Schichttabelle erstellen
+	Hearth Cut Tool	Feuerstellenprofil-Werkzeug
+	Set Section Properties	Profileigenschaften festlegen
+	Stratum Badge Tool	Schichtnummern-Werkzeug
+	Stratum Line Tool	Schichtlinien-Werkzeug
+
 

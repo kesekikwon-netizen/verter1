@@ -105,6 +105,9 @@ pub fn tool_icon(name: &str) -> &'static str {
         "tool-find-number" => "tw-find-number",
         "tool-posthole" => "tw-posthole",
         "tool-hachure" => "tw-hachure",
+        "tool-stratum-line" => "tw-line",
+        "tool-stratum-badge" => "tw-strata",
+        "tool-hearth-cut" => "tw-bucket",
         other => {
             if exists(other) {
                 table().get_key_value(other).map(|(k, _)| *k).unwrap_or("square-dashed")

@@ -140,6 +140,9 @@ pub const TOOL_GROUPS: &[&[ToolInfo]] = &[
         t("find-number", "Find Number Tool", None, "tool-find-number"),
         t("posthole", "Posthole Tool", None, "tool-posthole"),
         t("hachure", "Slope Hachure Tool", None, "tool-hachure"),
+        t("stratum-line", "Stratum Line Tool", None, "tool-stratum-line"),
+        t("stratum-badge", "Stratum Badge Tool", None, "tool-stratum-badge"),
+        t("hearth-cut", "Hearth Cut Tool", None, "tool-hearth-cut"),
     ],
 ];
 

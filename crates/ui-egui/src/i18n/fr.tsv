@@ -4149,4 +4149,14 @@ lighting	Light	Lumière
 	Set Feature Properties	Définir les propriétés de la structure
 	Slope Hachure Tool	Outil Hachures de talus
 	Spot Height Tool	Outil Point d'altitude
+	Add Hearth / Burnt Clay Section	Ajouter une coupe de foyer / argile cuite
+	Add Stratum Badge	Ajouter un badge de strate
+	Add Stratum Boundary Line	Ajouter une ligne de limite de strate
+	Calculate Section Metrics	Calculer les mesures de coupe
+	Generate Strata Explanation Table	Générer le tableau stratigraphique à trois lignes
+	Hearth Cut Tool	Outil de coupe de foyer
+	Set Section Properties	Définir les propriétés de coupe
+	Stratum Badge Tool	Outil de badge de strate
+	Stratum Line Tool	Outil de ligne de strate
+
 

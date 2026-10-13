@@ -4134,3 +4134,13 @@ lighting	Light	ライト
 	Set Feature Properties	遺構プロパティを設定
 	Slope Hachure Tool	斜面ケバツール
 	Spot Height Tool	標高点ツール
+	Add Hearth / Burnt Clay Section	焼土面・炉跡断面を追加
+	Add Stratum Badge	土層番号バッジを追加
+	Add Stratum Boundary Line	土層境界線を追加
+	Calculate Section Metrics	断面数値を計算
+	Generate Strata Explanation Table	下段三線表土層解説表を生成
+	Hearth Cut Tool	焼土面ツール
+	Set Section Properties	断面プロパティを設定
+	Stratum Badge Tool	土層番号ツール
+	Stratum Line Tool	土層線ツール
+

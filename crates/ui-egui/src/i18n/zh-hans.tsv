@@ -3768,4 +3768,14 @@ lighting	Light	光源
 	Set Feature Properties	设置遗迹属性
 	Slope Hachure Tool	坡度晕渲工具
 	Spot Height Tool	标高点工具
+	Add Hearth / Burnt Clay Section	添加灶址/红烧土剖面
+	Add Stratum Badge	添加地层编号徽标
+	Add Stratum Boundary Line	添加地层分界线
+	Calculate Section Metrics	计算剖面数值
+	Generate Strata Explanation Table	生成下段三线地层说明表
+	Hearth Cut Tool	烧土面工具
+	Set Section Properties	设置剖面属性
+	Stratum Badge Tool	地层编号工具
+	Stratum Line Tool	地层线工具
+
 

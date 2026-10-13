@@ -69,6 +69,7 @@ pub mod recovery;
 mod select;
 pub(crate) mod shaper;
 pub(crate) mod slices;
+pub mod stratatools;
 mod stroke;
 mod style;
 pub mod stylelib;
@@ -288,6 +289,7 @@ pub fn command_specs() -> &'static [CommandSpec] {
         v.extend(levellines::specs());
         v.extend(underlay::specs());
         v.extend(plantools::specs());
+        v.extend(stratatools::specs());
         v
     })
 }

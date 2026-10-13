@@ -2790,3 +2790,104 @@ fn j009_plan_tools_and_metrics_integration() {
     assert!(right_line.contains("4.00 m"), "{}", right_line);
     assert!(right_line.contains("Major/Minor"), "{}", right_line);
 }
+
+#[test]
+fn j010_section_and_strata_view_integration() {
+    let mut h = Harness::new();
+    h.app.run("drawing.newSection", json!({})).unwrap();
+    h.settle();
+
+    // 1. Tool selection for J010 stratum tools
+    for tool_name in ["stratum-line", "stratum-badge", "hearth-cut"] {
+        h.app.select_tool(tool_name);
+        assert_eq!(h.app.session.tool_id(), tool_name);
+    }
+
+    // 2. Control bar shows Strata Table button when stratum tool is active
+    h.settle();
+    let table_btn = h.rect(wid("ctl-strata-table", ()));
+    assert!(table_btn.is_some(), "ctl-strata-table button present in control bar");
+
+    // 3. Section properties & stratum line
+    h.app.run("section.setProps", json!({"name": "A-A' 북벽", "datum_m": 152.5})).unwrap();
+
+    let line_res = h
+        .app
+        .run(
+            "drawing.addStratumLine",
+            json!({
+                "points": [[100.0, 200.0], [250.0, 210.0], [400.0, 205.0]]
+            }),
+        )
+        .unwrap();
+    assert!(line_res["id"].as_u64().is_some());
+
+    // 4. Stratum badges with Munsell, texture, and inclusions
+    let badge1_res = h
+        .app
+        .run(
+            "drawing.addStratumBadge",
+            json!({
+                "x": 150.0,
+                "y": 180.0,
+                "number": 1,
+                "name": "표토",
+                "munsell": "10YR 4/3",
+                "texture": "사질점토",
+                "inclusions": "식생 부식토"
+            }),
+        )
+        .unwrap();
+    assert_eq!(badge1_res["number"], 1);
+
+    let badge2_res = h
+        .app
+        .run(
+            "drawing.addStratumBadge",
+            json!({
+                "x": 150.0,
+                "y": 240.0,
+                "number": 2,
+                "name": "흑갈색 사질점토",
+                "munsell": "10YR 3/2",
+                "texture": "점토질모래",
+                "inclusions": "목탄편 미량"
+            }),
+        )
+        .unwrap();
+    assert_eq!(badge2_res["number"], 2);
+
+    // 5. Hearth cut (소토면)
+    let hearth_res = h
+        .app
+        .run(
+            "drawing.addHearthCut",
+            json!({
+                "points": [[180.0, 230.0], [220.0, 230.0], [210.0, 240.0], [190.0, 240.0]]
+            }),
+        )
+        .unwrap();
+    assert!(hearth_res["id"].as_u64().is_some());
+
+    // 6. Three-line Strata Table generation
+    let table_res = h.app.run("drawing.generateStrataTable", json!({})).unwrap();
+    assert!(table_res["rows"].as_u64().unwrap() >= 2);
+
+    // 7. Section metrics calculation
+    let metrics_res = h.app.run("section.calculateMetrics", json!({})).unwrap();
+    assert!(metrics_res["width_m"].as_f64().unwrap() > 0.0);
+    assert!(metrics_res["max_depth_m"].as_f64().is_some());
+
+    // 8. Properties panel shows stratum and section information
+    let b1_id = badge1_res["id"].as_u64().unwrap();
+    h.app.run("select.set", json!({"ids": [b1_id]})).unwrap();
+    h.settle();
+
+    let right = h.panel(RIGHT);
+    let right_line = h.line_in(right);
+    assert!(right_line.contains("Stratum"), "{}", right_line);
+    assert!(right_line.contains("1호"), "{}", right_line);
+    assert!(right_line.contains("표토"), "{}", right_line);
+    assert!(right_line.contains("10YR 4/3"), "{}", right_line);
+    assert!(right_line.contains("Section"), "{}", right_line);
+}

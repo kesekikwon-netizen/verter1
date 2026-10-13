@@ -31,6 +31,7 @@ pub mod select;
 pub mod settings;
 pub mod shape;
 pub mod slice;
+pub mod stratatools;
 pub mod symbolism;
 pub mod text;
 pub mod typewidget;
@@ -594,6 +595,9 @@ pub fn create(id: &str) -> Box<dyn Tool> {
         "find-number" => Box::new(plantools::FindNumberTool::new()),
         "posthole" => Box::new(plantools::PostholeTool::new()),
         "hachure" => Box::new(plantools::SlopeHachureTool::new()),
+        "stratum-line" => Box::new(stratatools::StratumLineTool::new()),
+        "stratum-badge" => Box::new(stratatools::StratumBadgeTool::new()),
+        "hearth-cut" => Box::new(stratatools::HearthCutTool::new()),
         // Not in the toolbar: `file.place.queue` loads it.
         "place" => Box::new(place::PlaceTool::default()),
         other => symbolism::create(other)

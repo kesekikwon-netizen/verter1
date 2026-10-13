@@ -8,8 +8,22 @@ use super::*;
 
 /// The tools the Control bar shows the drawing layout for: those that draw lines and shapes. The
 /// anchor tools, Smooth and Arc keep the classic Control bar, where their options are.
-const DRAWING_TOOLS: &[&str] =
-    &["pen", "curvature", "pencil", "lineSegment", "rectangle", "roundedRectangle", "ellipse", "polygon", "star", "paintbrush", "blobBrush"];
+const DRAWING_TOOLS: &[&str] = &[
+    "pen",
+    "curvature",
+    "pencil",
+    "lineSegment",
+    "rectangle",
+    "roundedRectangle",
+    "ellipse",
+    "polygon",
+    "star",
+    "paintbrush",
+    "blobBrush",
+    "stratum-line",
+    "stratum-badge",
+    "hearth-cut",
+];
 
 const H: f32 = 28.0;
 const GAP: f32 = 10.0;
@@ -107,6 +121,21 @@ fn drawing(app: &mut VectorcraftApp, ui: &mut Ui, room: Rect, t: &Tokens) {
     label(tw!("Pen Pressure"), t.text_dim, &mut x2);
     x = pressure_segments(app, ui, pos2(x2, cy), t) + GAP;
     x = divider(ui, x, cy, t);
+    let tool_id = app.session.tool_id();
+    if tool_id == "stratum-badge" || tool_id == "stratum-line" || tool_id == "hearth-cut" {
+        let btn_text = tw!("Strata Table");
+        let btn_w = width_of(ui, btn_text, font(12.0)) + 16.0;
+        let btn_rect = Rect::from_min_size(pos2(x, cy - H / 2.0), vec2(btn_w, H));
+        let resp = ui.interact(btn_rect, wid("ctl-strata-table", ()), Sense::click());
+        let fill = if resp.hovered() { t.hover } else { t.panel_darker };
+        ui.painter().rect(btn_rect, CornerRadius::same(6), fill, Stroke::new(1.0, t.border), StrokeKind::Inside);
+        text(ui, btn_rect.center(), Align2::CENTER_CENTER, btn_text, font(12.0), t.text);
+        if resp.on_hover_text(tw!("Generate Three-Line Strata Explanation Table")).clicked() {
+            app.run("drawing.generateStrataTable", json!({})).ok();
+        }
+        x = btn_rect.right() + GAP;
+        x = divider(ui, x, cy, t);
+    }
     p.text(pos2(x, cy), Align2::LEFT_CENTER, tw!("Weight, hatch and line type: in the Drawing Palette at the right"), font(12.0), t.text_disabled);
 }
 

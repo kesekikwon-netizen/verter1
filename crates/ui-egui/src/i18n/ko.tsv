@@ -4431,4 +4431,19 @@ trowel	Major/Minor	장축·단축
 	Set Feature Properties	유구 속성 설정
 	Slope Hachure Tool	경사 기호 도구
 	Spot Height Tool	표고점 도구
+trowel	Generate Three-Line Strata Explanation Table	하단 삼선표 토층 해설표 생성
+trowel	Strata Table	토층표
+trowel	Stratum	토층
+trowel	Stratum Line	토층선
+trowel	Stratum Badge	토층 번호
+trowel	Hearth Cut	소토면
+	Add Hearth / Burnt Clay Section	소토면 / 노지 단면 추가
+	Add Stratum Badge	토층 번호 배지 추가
+	Add Stratum Boundary Line	토층 경계선 추가
+	Calculate Section Metrics	단면 수치 계산
+	Generate Strata Explanation Table	하단 삼선표 토층 해설표 생성
+	Hearth Cut Tool	소토면 도구
+	Set Section Properties	단면 속성 설정
+	Stratum Badge Tool	토층 번호 도구
+	Stratum Line Tool	토층선 도구
 

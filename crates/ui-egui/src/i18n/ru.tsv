@@ -4137,4 +4137,14 @@ lighting	Light	Свет
 	Set Feature Properties	Задать свойства объекта
 	Slope Hachure Tool	Инструмент «Штрихи откоса»
 	Spot Height Tool	Инструмент «Отметка высоты»
+	Add Hearth / Burnt Clay Section	Добавить разрез очага / прокаленного грунта
+	Add Stratum Badge	Добавить маркер слоя
+	Add Stratum Boundary Line	Добавить границу слоя
+	Calculate Section Metrics	Рассчитать параметры разреза
+	Generate Strata Explanation Table	Создать трехлинейную таблицу стратиграфии
+	Hearth Cut Tool	Инструмент разреза очага
+	Set Section Properties	Задать свойства разреза
+	Stratum Badge Tool	Инструмент маркера слоя
+	Stratum Line Tool	Инструмент линии слоя
+
 

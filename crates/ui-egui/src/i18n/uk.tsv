@@ -4120,4 +4120,14 @@ lighting	Light	Світло
 	Set Feature Properties	Встановити властивості об'єкта
 	Slope Hachure Tool	Інструмент «Штрихи укосу»
 	Spot Height Tool	Інструмент «Позначка висоти»
+	Add Hearth / Burnt Clay Section	Додати переріз вогнища / випаленого ґрунту
+	Add Stratum Badge	Додати маркер шару
+	Add Stratum Boundary Line	Додати межу шару
+	Calculate Section Metrics	Розрахувати параметри перерізу
+	Generate Strata Explanation Table	Створити трилінійну таблицю стратиграфії
+	Hearth Cut Tool	Інструмент перерізу вогнища
+	Set Section Properties	Задати властивості перерізу
+	Stratum Badge Tool	Інструмент маркера шару
+	Stratum Line Tool	Інструмент лінії шару
+
 

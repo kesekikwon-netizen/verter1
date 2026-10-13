@@ -47,10 +47,10 @@ pub(super) fn show(app: &mut VectorcraftApp, ui: &mut Ui, r: Rect) {
     let left = r.left() + PAD;
     let fields = left + 40.0 + 6.0;
 
-    // Feature metadata and metrics from selection (J009):
-    let (cur_kind, cur_num, cur_period, metrics, axes) = if let Some(st) = app.session.active() {
+    // Feature metadata and metrics from selection (J009, J010):
+    let (cur_kind, cur_num, cur_period, metrics, axes, stratum_info, section_info) = if let Some(st) = app.session.active() {
         let sel_node = st.selection.objects.first().copied().and_then(|id| st.doc.node(id));
-        let (k, n, p, maj, min) = sel_node
+        let (k, n, p, maj, min, str_no, str_name, str_munsell) = sel_node
             .and_then(|n| n.attrs.as_deref())
             .map(|a| {
                 let k = a.data.iter().find(|(k, _)| k == "feature_kind" || k == "feature:kind").map(|(_, v)| v.clone());
@@ -58,9 +58,12 @@ pub(super) fn show(app: &mut VectorcraftApp, ui: &mut Ui, r: Rect) {
                 let p = a.data.iter().find(|(k, _)| k == "feature_period" || k == "feature:period").map(|(_, v)| v.clone());
                 let maj = a.data.iter().find(|(k, _)| k == "feature_major_m").and_then(|(_, v)| v.parse::<f64>().ok());
                 let min = a.data.iter().find(|(k, _)| k == "feature_minor_m").and_then(|(_, v)| v.parse::<f64>().ok());
-                (k, n, p, maj, min)
+                let s_no = a.data.iter().find(|(k, _)| k == "stratum:number").map(|(_, v)| v.clone());
+                let s_name = a.data.iter().find(|(k, _)| k == "stratum:name").map(|(_, v)| v.clone());
+                let s_mun = a.data.iter().find(|(k, _)| k == "stratum:munsell").map(|(_, v)| v.clone());
+                (k, n, p, maj, min, s_no, s_name, s_mun)
             })
-            .unwrap_or((None, None, None, None, None));
+            .unwrap_or((None, None, None, None, None, None, None, None));
 
         let m = sel_node.and_then(|node| match &node.kind {
             vectorcraft_doc::NodeKind::Path { path, .. } if path.is_closed() => {
@@ -78,9 +81,20 @@ pub(super) fn show(app: &mut VectorcraftApp, ui: &mut Ui, r: Rect) {
             _ => None,
         };
 
-        (k, n, p, m, ax)
+        let str_info = match (str_no, str_name, str_munsell) {
+            (Some(no), name, mun) => Some((no, name.unwrap_or_default(), mun.unwrap_or_default())),
+            _ => None,
+        };
+
+        let sec_info = st.doc.layers.first().and_then(|layer| layer.attrs.as_deref()).and_then(|a| {
+            let name = a.data.iter().find(|(k, _)| k == "section:name").map(|(_, v)| v.clone());
+            let datum_el = a.data.iter().find(|(k, _)| k == "section:datum_el").and_then(|(_, v)| v.parse::<f64>().ok());
+            if name.is_some() || datum_el.is_some() { Some((name.unwrap_or_else(|| "A-A'".into()), datum_el.unwrap_or(0.0))) } else { None }
+        });
+
+        (k, n, p, m, ax, str_info, sec_info)
     } else {
-        (None, None, None, None, None)
+        (None, None, None, None, None, None, None)
     };
 
     let kind_val = cur_kind.as_deref().unwrap_or(KINDS[0]);
@@ -153,6 +167,18 @@ pub(super) fn show(app: &mut VectorcraftApp, ui: &mut Ui, r: Rect) {
     if let Some((major_m, minor_m)) = axes {
         let x = text(ui, pos2(left, cy), Align2::LEFT_CENTER, tw!("Major/Minor"), font(11.0), t.text_dim).right() + 4.0;
         text(ui, pos2(x, cy), Align2::LEFT_CENTER, format!("{major_m:.2} m × {minor_m:.2} m"), mono(11.0), t.text);
+        cy += 16.0;
+    }
+    if let Some((no, name, munsell)) = stratum_info {
+        let label = if munsell.is_empty() { format!("{no}호 {name}") } else { format!("{no}호 {name} ({munsell})") };
+        let x = text(ui, pos2(left, cy), Align2::LEFT_CENTER, tw!("Stratum"), font(11.0), t.text_dim).right() + 4.0;
+        text(ui, pos2(x, cy), Align2::LEFT_CENTER, label, font(11.0), t.text);
+        cy += 16.0;
+    }
+    if let Some((name, datum_el)) = section_info {
+        let txt = if datum_el > 0.0 { format!("{name} (EL. {datum_el:.2} m)") } else { name };
+        let x = text(ui, pos2(left, cy), Align2::LEFT_CENTER, tw!("Section"), font(11.0), t.text_dim).right() + 4.0;
+        text(ui, pos2(x, cy), Align2::LEFT_CENTER, txt, mono(11.0), t.text);
     }
 }
 

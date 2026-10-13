@@ -4139,4 +4139,14 @@ lighting	Light	Luz
 	Set Feature Properties	Establecer propiedades del rasgo
 	Slope Hachure Tool	Herramienta Trazos de pendiente
 	Spot Height Tool	Herramienta Cota de elevación
+	Add Hearth / Burnt Clay Section	Añadir sección de hogar / arcilla quemada
+	Add Stratum Badge	Añadir insignia de estrato
+	Add Stratum Boundary Line	Añadir línea de límite de estrato
+	Calculate Section Metrics	Calcular medidas de sección
+	Generate Strata Explanation Table	Generar tabla estratigráfica de tres líneas
+	Hearth Cut Tool	Herramienta de sección de hogar
+	Set Section Properties	Establecer propiedades de sección
+	Stratum Badge Tool	Herramienta de insignia de estrato
+	Stratum Line Tool	Herramienta de línea de estrato
+
 

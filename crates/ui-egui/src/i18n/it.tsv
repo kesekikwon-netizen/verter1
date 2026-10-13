@@ -4141,4 +4141,14 @@ lighting	Light	Luce
 	Set Feature Properties	Imposta proprietà elemento
 	Slope Hachure Tool	Strumento Tratteggio di pendenza
 	Spot Height Tool	Strumento Quota altimetrica
+	Add Hearth / Burnt Clay Section	Aggiungi sezione focolare / argilla cotta
+	Add Stratum Badge	Aggiungi contrassegno strato
+	Add Stratum Boundary Line	Aggiungi linea limite strato
+	Calculate Section Metrics	Calcola misure di sezione
+	Generate Strata Explanation Table	Genera tabella stratigrafica a tre linee
+	Hearth Cut Tool	Strumento sezione focolare
+	Set Section Properties	Imposta proprietà di sezione
+	Stratum Badge Tool	Strumento contrassegno strato
+	Stratum Line Tool	Strumento linea strato
+
 
