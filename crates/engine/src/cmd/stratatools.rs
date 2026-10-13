@@ -624,9 +624,12 @@ fn calculate_section_metrics(s: &mut Session, p: &Value) -> Result<Value> {
         }
     });
 
-    let stored_datum_y = doc.layers.first().and_then(|l| doc.node(l.id)).and_then(|n| n.attrs.as_ref()).and_then(|a| {
-        a.data.iter().find(|(k, _)| k == "section:datum_y").and_then(|(_, v)| v.parse::<f64>().ok())
-    });
+    let stored_datum_y = doc
+        .layers
+        .first()
+        .and_then(|l| doc.node(l.id))
+        .and_then(|n| n.attrs.as_ref())
+        .and_then(|a| a.data.iter().find(|(k, _)| k == "section:datum_y").and_then(|(_, v)| v.parse::<f64>().ok()));
 
     let datum_y = p.get("datum_y").and_then(Value::as_f64).or(stored_datum_y).unwrap_or_else(|| if min_y.is_finite() { min_y } else { 100.0 });
 
@@ -781,12 +784,14 @@ mod tests {
         // Test transaction rollback
         s.execute("edit.undo", &json!({})).unwrap();
         let doc_after_undo = &s.doc().unwrap().doc;
-        let count = doc_after_undo.layers.iter().find(|l| l.display_name() == "토층선").map(|l| l.children().map(|c| c.len()).unwrap_or(0)).unwrap_or(0);
+        let count =
+            doc_after_undo.layers.iter().find(|l| l.display_name() == "토층선").map(|l| l.children().map(|c| c.len()).unwrap_or(0)).unwrap_or(0);
         assert_eq!(count, 0, "undo rolls back created stratum line");
 
         s.execute("edit.redo", &json!({})).unwrap();
         let doc_after_redo = &s.doc().unwrap().doc;
-        let count_redo = doc_after_redo.layers.iter().find(|l| l.display_name() == "토층선").map(|l| l.children().map(|c| c.len()).unwrap_or(0)).unwrap_or(0);
+        let count_redo =
+            doc_after_redo.layers.iter().find(|l| l.display_name() == "토층선").map(|l| l.children().map(|c| c.len()).unwrap_or(0)).unwrap_or(0);
         assert_eq!(count_redo, 1, "redo restores stratum line");
     }
 }
