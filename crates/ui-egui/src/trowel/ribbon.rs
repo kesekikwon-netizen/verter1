@@ -77,8 +77,8 @@ fn groups() -> [(&'static str, Vec<Tile>); 7] {
             vec![
                 tile("pen", "tw-pen", tw!("Pen"), Tool("pen")),
                 tile("pencil", "tw-pencil", tw!("Pencil"), Tool("pencil")),
-                tile("section-line", "tw-section-line", tw!("Section Line"), Soon("J009")),
-                tile("spot-height", "tw-spot-height", tw!("Spot Height"), Soon("J009")),
+                tile("section-line", "tw-section-line", tw!("Section Line"), Tool("section-line")),
+                tile("spot-height", "tw-spot-height", tw!("Spot Height"), Tool("spot-height")),
                 tile("bucket", "tw-bucket", tw!("Bucket"), Tool("livePaintBucket")),
             ],
         ),

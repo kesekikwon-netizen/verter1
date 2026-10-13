@@ -4082,4 +4082,16 @@ theme	Appearance	Erscheinungsbild
 	Windows Ink	Windows Ink
 	Align Scanned Underlay	Gescanntes Unterlegbild ausrichten
 	Estimate Underlay Alignment	Unterlegbild-Ausrichtung schätzen
+	Add Find Number	Fundnummer hinzufügen
+	Add Posthole	Pfostenloch hinzufügen
+	Add Section Line	Schnittlinie hinzufügen
+	Add Slope Hachure Ticks	Böschungsschraffen hinzufügen
+	Add Spot Height	Höhenpunkt hinzufügen
+	Calculate Polygon Metrics	Polygon-Messwerte berechnen
+	Find Number Tool	Fundnummer-Werkzeug
+	Posthole Tool	Pfostenloch-Werkzeug
+	Section Line Tool	Schnittlinien-Werkzeug
+	Set Feature Properties	Befund-Eigenschaften festlegen
+	Slope Hachure Tool	Böschungsschraffen-Werkzeug
+	Spot Height Tool	Höhenpunkt-Werkzeug
 

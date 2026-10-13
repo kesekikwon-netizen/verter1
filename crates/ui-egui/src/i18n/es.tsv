@@ -4127,4 +4127,16 @@ lighting	Light	Luz
 	Windows Ink	Windows Ink
 	Align Scanned Underlay	Alinear imagen subyacente escaneada
 	Estimate Underlay Alignment	Estimar alineación de imagen subyacente
+	Add Find Number	Añadir número de hallazgo
+	Add Posthole	Añadir agujero de poste
+	Add Section Line	Añadir línea de sección
+	Add Slope Hachure Ticks	Añadir trazos de pendiente
+	Add Spot Height	Añadir cota de elevación
+	Calculate Polygon Metrics	Calcular medidas del polígono
+	Find Number Tool	Herramienta de número de hallazgo
+	Posthole Tool	Herramienta de agujero de poste
+	Section Line Tool	Herramienta Línea de sección
+	Set Feature Properties	Establecer propiedades del rasgo
+	Slope Hachure Tool	Herramienta Trazos de pendiente
+	Spot Height Tool	Herramienta Cota de elevación
 

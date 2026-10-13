@@ -133,8 +133,23 @@ fn tools(app: &mut VectorcraftApp, ui: &Ui, r: Rect, top: f32, bh: f32, t: &Toke
     y += 12.0;
     for (key, icon, label) in arch() {
         let rect = Rect::from_min_size(pos2(x, y), vec2(BUTTON.x, bh));
-        crate::icons::paint(ui, icon, Rect::from_center_size(rect.center(), vec2(19.0, 19.0)), t.icon.gamma_multiply(0.4));
-        soon_widget(ui, wid("arch", key), rect, label, "J009");
+        let on = app.session.tool_id() == key;
+        let resp = ui.interact(rect, wid("arch", key), Sense::click());
+        let fill = if on {
+            t.tool_active
+        } else if resp.hovered() {
+            t.hover
+        } else {
+            Color32::TRANSPARENT
+        };
+        ui.painter().rect_filled(rect, CornerRadius::same(8), fill);
+        crate::icons::paint(ui, icon, Rect::from_center_size(rect.center(), vec2(19.0, 19.0)), if on { t.icon_on } else { t.icon });
+        if let Some(sc) = crate::shortcut_editor::tool_shortcut(key) {
+            text(ui, rect.right_bottom() - vec2(2.0, 1.0), Align2::RIGHT_BOTTOM, sc, mono(8.0), if on { t.icon_on } else { t.text_disabled });
+        }
+        if resp.on_hover_text(label).clicked() {
+            chosen = Some(Pick::Tool(key.to_string()));
+        }
         y = rect.bottom() + 1.0;
     }
     chosen

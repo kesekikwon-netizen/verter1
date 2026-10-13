@@ -28,6 +28,7 @@ fn heading(id: &str) -> &'static str {
         _ if id.starts_with("perspective") => "Perspective",
         "artboard" => "Artboards",
         "slice" | "sliceSelection" => "Slices",
+        "section-line" | "spot-height" | "find-number" | "posthole" | "hachure" => "Draw",
         _ => "More",
     }
 }

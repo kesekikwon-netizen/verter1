@@ -4125,4 +4125,16 @@ lighting	Light	Свет
 	Windows Ink	Windows Ink
 	Align Scanned Underlay	Выровнять сканированную подложку
 	Estimate Underlay Alignment	Оценить выравнивание подложки
+	Add Find Number	Добавить номер находки
+	Add Posthole	Добавить столбовую яму
+	Add Section Line	Добавить линию сечения
+	Add Slope Hachure Ticks	Добавить штрихи откоса
+	Add Spot Height	Добавить отметку высоты
+	Calculate Polygon Metrics	Вычислить метрики полигона
+	Find Number Tool	Инструмент «Номер находки»
+	Posthole Tool	Инструмент «Столбовая яма»
+	Section Line Tool	Инструмент «Линия сечения»
+	Set Feature Properties	Задать свойства объекта
+	Slope Hachure Tool	Инструмент «Штрихи откоса»
+	Spot Height Tool	Инструмент «Отметка высоты»
 

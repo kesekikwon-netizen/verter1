@@ -1,8 +1,9 @@
 //! The properties at the bottom of the right column (design 2.1 §3): what is selected and how big
-//! it is. The feature's kind and period, which Strata's submission check asks for, come with J009.
+//! it is. The feature's kind, number, period and closed polygon metrics (J009).
 //! ⋯ pops the full Properties panel out; the arrow folds this one to its head.
 
 use serde_json::json;
+use vectorcraft_geom::Shape;
 
 use super::*;
 
@@ -10,9 +11,13 @@ use super::*;
 const PAD: f32 = 14.0;
 const FIELD_H: f32 = 22.0;
 
+/// Standard archaeological feature kinds and historical periods.
+const KINDS: &[&str] = &["주거지", "수혈", "수구", "유구", "석축", "석곽묘", "토광묘", "주혈", "기타"];
+const PERIODS: &[&str] = &["청동기", "원삼국", "삼국", "백제", "신라", "가야", "통일신라", "고려", "조선", "미상"];
+
 /// The properties' height: open, or folded to the head.
 pub(super) fn height(ctx: &egui::Context) -> f32 {
-    if folded(ctx) { 33.0 } else { 112.0 }
+    if folded(ctx) { 33.0 } else { 136.0 }
 }
 
 fn folded(ctx: &egui::Context) -> bool {
@@ -41,21 +46,113 @@ pub(super) fn show(app: &mut VectorcraftApp, ui: &mut Ui, r: Rect) {
     }
     let left = r.left() + PAD;
     let fields = left + 40.0 + 6.0;
-    // Kind and period (J009).
+
+    // Feature metadata and metrics from selection (J009):
+    let (cur_kind, cur_num, cur_period, metrics, axes) = if let Some(st) = app.session.active() {
+        let sel_node = st.selection.objects.first().copied().and_then(|id| st.doc.node(id));
+        let (k, n, p, maj, min) = sel_node
+            .and_then(|n| n.attrs.as_deref())
+            .map(|a| {
+                let k = a.data.iter().find(|(k, _)| k == "feature_kind" || k == "feature:kind").map(|(_, v)| v.clone());
+                let n = a.data.iter().find(|(k, _)| k == "feature_number" || k == "feature:number").map(|(_, v)| v.clone());
+                let p = a.data.iter().find(|(k, _)| k == "feature_period" || k == "feature:period").map(|(_, v)| v.clone());
+                let maj = a.data.iter().find(|(k, _)| k == "feature_major_m").and_then(|(_, v)| v.parse::<f64>().ok());
+                let min = a.data.iter().find(|(k, _)| k == "feature_minor_m").and_then(|(_, v)| v.parse::<f64>().ok());
+                (k, n, p, maj, min)
+            })
+            .unwrap_or((None, None, None, None, None));
+
+        let m = sel_node.and_then(|node| match &node.kind {
+            vectorcraft_doc::NodeKind::Path { path, .. } if path.is_closed() => {
+                let bp = path.to_bezpath();
+                let ppm = st.doc.coord.as_ref().map(|c| c.points_per_meter()).unwrap_or(141.73228);
+                let area_m2 = bp.area().abs() / (ppm * ppm);
+                let perimeter_m = bp.perimeter(1e-6) / ppm;
+                Some((area_m2, perimeter_m))
+            }
+            _ => None,
+        });
+
+        let ax = match (maj, min) {
+            (Some(j), Some(n)) => Some((j, n)),
+            _ => None,
+        };
+
+        (k, n, p, m, ax)
+    } else {
+        (None, None, None, None, None)
+    };
+
+    let kind_val = cur_kind.as_deref().unwrap_or(KINDS[0]);
+    let num_val = cur_num.map(|n| format!("{n}호")).unwrap_or_else(|| "1호".to_string());
+    let period_val = cur_period.as_deref().unwrap_or(PERIODS[0]);
+
+    // Kind and No. row
     let cy = head.bottom() + 2.0 + FIELD_H / 2.0;
     text(ui, pos2(left, cy), Align2::LEFT_CENTER, tw!("Kind"), font(11.0), t.text_dim);
-    let x = field_soon(ui, wid("props-kind", ()), pos2(fields, cy), 112.0, tw!("Kind"), tw!("Choose"), true, &t);
-    field_soon(ui, wid("props-number", ()), pos2(x + 6.0, cy), 44.0, tw!("No."), tw!("No."), false, &t);
+    let mut pick_kind = None;
+    let x = field_picker(ui, wid("props-kind", ()), pos2(fields, cy), 112.0, kind_val, true, |ui| {
+        for &k in KINDS {
+            if ui.selectable_label(k == kind_val, k).clicked() {
+                pick_kind = Some(k);
+            }
+        }
+    });
+
+    let mut pick_num = None;
+    field_picker(ui, wid("props-number", ()), pos2(x + 6.0, cy), 44.0, &num_val, false, |ui| {
+        for n in 1..=12 {
+            let s = format!("{n}호");
+            if ui.selectable_label(s == num_val, &s).clicked() {
+                pick_num = Some(n);
+            }
+        }
+    });
+
+    // Period row
     let cy = cy + FIELD_H + 3.0;
     text(ui, pos2(left, cy), Align2::LEFT_CENTER, tw!("Period"), font(11.0), t.text_dim);
-    field_soon(ui, wid("props-period", ()), pos2(fields, cy), 112.0, tw!("Period"), tw!("Choose"), true, &t);
-    // "Required" (what Strata's submission check asks for) shows with J009, which checks it.
-    // How big the selection is.
+    let mut pick_period = None;
+    field_picker(ui, wid("props-period", ()), pos2(fields, cy), 112.0, period_val, true, |ui| {
+        for &p in PERIODS {
+            if ui.selectable_label(p == period_val, p).clicked() {
+                pick_period = Some(p);
+            }
+        }
+    });
+
+    // Apply any property updates
+    if pick_kind.is_some() || pick_num.is_some() || pick_period.is_some() {
+        let mut params = json!({});
+        if let Some(k) = pick_kind {
+            params["kind"] = json!(k);
+        }
+        if let Some(n) = pick_num {
+            params["number"] = json!(n);
+        }
+        if let Some(p) = pick_period {
+            params["period"] = json!(p);
+        }
+        app.run("feature.setProps", params).ok();
+    }
+
+    let mut cy = cy + FIELD_H / 2.0 + 5.0 + 6.0;
     if let Some((w, h)) = size {
-        let cy = cy + FIELD_H / 2.0 + 5.0 + 8.0;
         let u = app.session.general_unit();
         let x = text(ui, pos2(left, cy), Align2::LEFT_CENTER, tw!("Size"), font(11.0), t.text_dim).right() + 4.0;
         text(ui, pos2(x, cy), Align2::LEFT_CENTER, format!("{} × {}", u.format(w), u.format(h)), mono(11.0), t.text);
+        cy += 18.0;
+    }
+    if let Some((area_m2, perimeter_m)) = metrics {
+        let x = text(ui, pos2(left, cy), Align2::LEFT_CENTER, tw!("Plan Area"), font(11.0), t.text_dim).right() + 4.0;
+        let x = text(ui, pos2(x, cy), Align2::LEFT_CENTER, format!("{area_m2:.2} ㎡"), mono(11.0), t.text).right() + 8.0;
+        let x = text(ui, pos2(x, cy), Align2::LEFT_CENTER, tw!("Perimeter"), font(11.0), t.text_dim).right() + 4.0;
+        text(ui, pos2(x, cy), Align2::LEFT_CENTER, format!("{perimeter_m:.2} m"), mono(11.0), t.text);
+        cy += 16.0;
+    }
+    if let Some((major_m, minor_m)) = axes {
+        let x = text(ui, pos2(left, cy), Align2::LEFT_CENTER, tw!("Major/Minor"), font(11.0), t.text_dim).right() + 4.0;
+        text(ui, pos2(x, cy), Align2::LEFT_CENTER, format!("{major_m:.2} m × {minor_m:.2} m"), mono(11.0), t.text);
     }
 }
 
@@ -69,16 +166,17 @@ fn summary(app: &VectorcraftApp) -> String {
     }
 }
 
-/// A field a later job (J009) brings for `what`, `w` wide at `at` (its left centre), showing
-/// `placeholder`. Returns where it ends.
-#[allow(clippy::too_many_arguments)]
-fn field_soon(ui: &Ui, id: egui::Id, at: Pos2, w: f32, what: &str, placeholder: &str, chevron: bool, t: &Tokens) -> f32 {
+/// An interactive picker field box displaying `value` with a drop-down menu.
+fn field_picker<R>(ui: &mut Ui, id: egui::Id, at: Pos2, w: f32, value: &str, chevron: bool, menu: impl FnOnce(&mut Ui) -> R) -> f32 {
+    let t = Tokens::get(ui.ctx());
     let r = Rect::from_min_size(pos2(at.x, at.y - FIELD_H / 2.0), vec2(w, FIELD_H));
-    ui.painter().rect(r, CornerRadius::same(6), t.panel_darker, Stroke::new(1.0, t.input_border), StrokeKind::Inside);
-    text(ui, pos2(r.left() + 8.0, at.y), Align2::LEFT_CENTER, placeholder, font(11.0), t.text_disabled);
+    let resp = ui.interact(r, id, Sense::click());
+    let fill = if resp.hovered() { t.hover } else { t.panel_darker };
+    ui.painter().rect(r, CornerRadius::same(6), fill, Stroke::new(1.0, t.input_border), StrokeKind::Inside);
+    text(ui, pos2(r.left() + 8.0, at.y), Align2::LEFT_CENTER, value, font(11.0), t.text);
     if chevron {
-        triangle(ui, pos2(r.right() - 8.0 - 3.5, at.y), 7.0, true, t.text_disabled);
+        triangle(ui, pos2(r.right() - 8.0 - 3.5, at.y), 7.0, true, t.text_dim);
     }
-    soon_widget(ui, id, r, what, "J009");
+    egui::Popup::menu(&resp).show(menu);
     r.right()
 }

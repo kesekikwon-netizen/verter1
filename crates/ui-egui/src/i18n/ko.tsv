@@ -4413,4 +4413,22 @@ trowel	Underlay aligned: RMSE {rmse:.2} mm (exceeds tolerance)	밑그림 정합 
 trowel	Underlay aligned: RMSE {rmse:.2} mm (within tolerance)	밑그림 정합 완료: RMSE {rmse:.2} mm (허용치 만족)
 	Align Scanned Underlay	밑그림 정합
 	Estimate Underlay Alignment	밑그림 정합 오차 추정
+trowel	Area Only	면적만
+trowel	Calculate plan metrics when closing polygons	다각형 폐합 시 평면 수치 계산
+trowel	Perimeter	둘레
+trowel	Perimeter Only	둘레만
+trowel	Plan Area	평면 면적
+trowel	Major/Minor	장축·단축
+	Add Find Number	유물 번호 추가
+	Add Posthole	주혈 추가
+	Add Section Line	단면선 추가
+	Add Slope Hachure Ticks	경사/법면 기호 추가
+	Add Spot Height	표고점 추가
+	Calculate Polygon Metrics	폐합 다각형 수치 계산
+	Find Number Tool	유물 번호 도구
+	Posthole Tool	주혈 도구
+	Section Line Tool	단면선 도구
+	Set Feature Properties	유구 속성 설정
+	Slope Hachure Tool	경사 기호 도구
+	Spot Height Tool	표고점 도구
 

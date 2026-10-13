@@ -484,9 +484,9 @@ fn ribbon_follows_the_mockup_and_runs_commands() {
     h.settle();
     assert_eq!(well(&h, "save"), Some(t.action));
     // A tile a later job brings is dimmed and does nothing.
-    assert_eq!(well(&h, "section-line"), Some(t.panel_darker));
+    assert_eq!(well(&h, "north"), Some(t.panel_darker));
     let docs = h.app.session.documents().len();
-    h.click(wid("tile", "section-line"));
+    h.click(wid("tile", "north"));
     assert_eq!((h.app.session.documents().len(), h.app.session.tool_id()), (docs, "pen"));
     assert!(h.app.ui.dialog.is_none());
     // Find a command opens the command palette.
@@ -721,7 +721,7 @@ fn tool_column_has_the_mockup_groups() {
     }
     h.app.ui.flyout = None;
     h.click(wid("arch", "section-line"));
-    assert_eq!(h.app.session.tool_id(), "curvature");
+    assert_eq!(h.app.session.tool_id(), "section-line");
 }
 
 #[test]
@@ -1004,9 +1004,9 @@ fn status_bar_shows_messages_for_a_while() {
         assert!(!line.contains("to add a corner point"), "the error, the {time} time: {line}");
         h.later(7.0);
     }
-    // Section Line (J009): what it is and when.
-    h.click(wid("tile", "section-line"));
-    assert!(h.line_in(bar).contains("Section Line: coming soon (J009)"), "{}", h.line_in(bar));
+    // North Arrow (J012): what it is and when.
+    h.click(wid("tile", "north"));
+    assert!(h.line_in(bar).contains("North Arrow: coming soon (J012)"), "{}", h.line_in(bar));
     h.later(5.0);
     // Cut Face runs with J014: with nothing selected, status explains what to select.
     h.click(wid("palette-cut", ()));
@@ -2727,4 +2727,66 @@ fn underlay_align_card_opens_and_toggles() {
     h.click_at(close_r.center());
     h.settle();
     assert!(h.rect(card_id).is_none(), "underlay alignment card should close on cancel");
+}
+
+#[test]
+fn j009_plan_tools_and_metrics_integration() {
+    let mut h = Harness::new();
+
+    // 1. Tool selection for all 5 archaeological plan tools
+    for tool_name in ["section-line", "spot-height", "find-number", "posthole", "hachure"] {
+        h.click(wid("arch", tool_name));
+        assert_eq!(h.app.session.tool_id(), tool_name, "tool switched to {tool_name}");
+    }
+
+    // 2. Execution of the 5 archaeological plan drawing commands
+    let sl_res = h.app.run("drawing.addSectionLine", json!({"x1": 10.0, "y1": 10.0, "x2": 100.0, "y2": 10.0, "label": "A"})).unwrap();
+    assert_eq!(sl_res["label"], "A");
+
+    let sh_res = h.app.run("drawing.addSpotHeight", json!({"x": 50.0, "y": 50.0, "elevation": 152.36})).unwrap();
+    assert_eq!(sh_res["elevation"], 152.36);
+
+    let fn_res = h.app.run("drawing.addFindNumber", json!({"x": 60.0, "y": 60.0})).unwrap();
+    assert_eq!(fn_res["number"], 1);
+
+    let ph_res = h.app.run("drawing.addPosthole", json!({"x": 70.0, "y": 70.0, "radius": 13.0, "depth_cm": 25})).unwrap();
+    assert_eq!(ph_res["number"], 1);
+    assert_eq!(ph_res["depth_cm"], 25);
+
+    let ht_res = h.app.run("drawing.addSlopeTicks", json!({"points": [[10.0, 10.0], [50.0, 10.0], [100.0, 10.0]], "spacing": 6.0})).unwrap();
+    assert!(ht_res["ticks"].as_u64().unwrap() > 0);
+
+    // 3. When Closed dropdown interaction in control bar
+    h.app.select_tool("pen");
+    h.settle();
+    let when_closed_id = wid("ctl-closed", ());
+    let when_closed_rect = h.rect(when_closed_id).expect("ctl-closed widget present");
+    assert!(when_closed_rect.is_positive());
+
+    // 4. Closed polygon metrics calculation and properties panel display
+    // Scale 1:20 => 141.73228 pt per meter
+    h.app.run("drawing.setCoord", json!({"scale": 20.0})).unwrap();
+    let rect_id = NodeId(
+        h.app.run("shape.rectangle", json!({"x": 200.0, "y": 200.0, "width": 141.73228, "height": 141.73228})).unwrap()["id"].as_u64().unwrap(),
+    );
+    h.app.run("select.set", json!({"ids": [rect_id.0]})).unwrap();
+    h.settle();
+
+    let metrics_res = h.app.run("drawing.calculateMetrics", json!({})).unwrap();
+    assert!((metrics_res["area_m2"].as_f64().unwrap() - 1.0).abs() < 0.05);
+    assert!((metrics_res["perimeter_m"].as_f64().unwrap() - 4.0).abs() < 0.05);
+
+    h.app.run("feature.setProps", json!({"kind": "주거지", "number": 1, "period": "청동기"})).unwrap();
+    h.settle();
+
+    let right = h.panel(RIGHT);
+    let right_line = h.line_in(right);
+    assert!(right_line.contains("주거지"), "{}", right_line);
+    assert!(right_line.contains("1호"), "{}", right_line);
+    assert!(right_line.contains("청동기"), "{}", right_line);
+    assert!(right_line.contains("Plan Area"), "{}", right_line);
+    assert!(right_line.contains("1.00 ㎡"), "{}", right_line);
+    assert!(right_line.contains("Perimeter"), "{}", right_line);
+    assert!(right_line.contains("4.00 m"), "{}", right_line);
+    assert!(right_line.contains("Major/Minor"), "{}", right_line);
 }

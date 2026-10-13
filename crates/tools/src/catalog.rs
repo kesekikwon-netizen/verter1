@@ -134,6 +134,13 @@ pub const TOOL_GROUPS: &[&[ToolInfo]] = &[
         t("printTiling", "Print Tiling Tool", None, "tool-print-tiling"),
     ],
     &[t("zoom", "Zoom Tool", Some("Z"), "tool-zoom")],
+    &[
+        t("section-line", "Section Line Tool", Some("Shift+A"), "tool-section-line"),
+        t("spot-height", "Spot Height Tool", Some("Shift+Z"), "tool-spot-height"),
+        t("find-number", "Find Number Tool", None, "tool-find-number"),
+        t("posthole", "Posthole Tool", None, "tool-posthole"),
+        t("hachure", "Slope Hachure Tool", None, "tool-hachure"),
+    ],
 ];
 
 pub fn all_tools() -> impl Iterator<Item = &'static ToolInfo> {

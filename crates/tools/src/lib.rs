@@ -24,6 +24,7 @@ pub mod params;
 pub mod pathtype;
 pub mod pen;
 pub mod place;
+pub mod plantools;
 pub mod printtiling;
 pub mod rulerguide;
 pub mod select;
@@ -588,6 +589,11 @@ pub fn create(id: &str) -> Box<dyn Tool> {
         "pen" => Box::new(pen::PenTool::default()),
         "type" | "areaType" | "typeOnPath" | "verticalType" | "verticalAreaType" | "verticalTypeOnPath" => Box::new(text::TypeTool::new(id)),
         "rectangle" | "roundedRectangle" | "ellipse" | "polygon" | "star" | "lineSegment" => Box::new(shape::ShapeTool::new(id)),
+        "section-line" => Box::new(plantools::SectionLineTool::new()),
+        "spot-height" => Box::new(plantools::SpotHeightTool::new()),
+        "find-number" => Box::new(plantools::FindNumberTool::new()),
+        "posthole" => Box::new(plantools::PostholeTool::new()),
+        "hachure" => Box::new(plantools::SlopeHachureTool::new()),
         // Not in the toolbar: `file.place.queue` loads it.
         "place" => Box::new(place::PlaceTool::default()),
         other => symbolism::create(other)

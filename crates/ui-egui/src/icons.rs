@@ -100,6 +100,11 @@ pub fn tool_icon(name: &str) -> &'static str {
         "tool-rotate-view" => "dc-rotate-view",
         "tool-print-tiling" => "printer",
         "tool-zoom" => "zoom-in",
+        "tool-section-line" => "tw-section-line",
+        "tool-spot-height" => "tw-spot-height",
+        "tool-find-number" => "tw-find-number",
+        "tool-posthole" => "tw-posthole",
+        "tool-hachure" => "tw-hachure",
         other => {
             if exists(other) {
                 table().get_key_value(other).map(|(k, _)| *k).unwrap_or("square-dashed")

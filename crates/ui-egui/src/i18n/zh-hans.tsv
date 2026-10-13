@@ -3756,4 +3756,16 @@ lighting	Light	光源
 	Windows Ink	Windows Ink
 	Align Scanned Underlay	对齐扫描底图
 	Estimate Underlay Alignment	估计底图对齐误差
+	Add Find Number	添加出土遗物编号
+	Add Posthole	添加柱洞
+	Add Section Line	添加剖面线
+	Add Slope Hachure Ticks	添加坡度晕渲记号
+	Add Spot Height	添加标高点
+	Calculate Polygon Metrics	计算多边形度量
+	Find Number Tool	遗物编号工具
+	Posthole Tool	柱洞工具
+	Section Line Tool	剖面线工具
+	Set Feature Properties	设置遗迹属性
+	Slope Hachure Tool	坡度晕渲工具
+	Spot Height Tool	标高点工具
 

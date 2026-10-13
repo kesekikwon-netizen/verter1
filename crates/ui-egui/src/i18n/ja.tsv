@@ -4122,3 +4122,15 @@ lighting	Light	ライト
 	Windows Ink	Windows Ink
 	Align Scanned Underlay	スキャン下絵の位置合わせ
 	Estimate Underlay Alignment	下絵位置合わせの推定
+	Add Find Number	遺物番号を追加
+	Add Posthole	柱穴を追加
+	Add Section Line	断面線を追加
+	Add Slope Hachure Ticks	斜面ケバ記号を追加
+	Add Spot Height	標高点を追加
+	Calculate Polygon Metrics	ポリゴンの計測値を計算
+	Find Number Tool	遺物番号ツール
+	Posthole Tool	柱穴ツール
+	Section Line Tool	断面線ツール
+	Set Feature Properties	遺構プロパティを設定
+	Slope Hachure Tool	斜面ケバツール
+	Spot Height Tool	標高点ツール

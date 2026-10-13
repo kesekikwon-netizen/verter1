@@ -56,6 +56,7 @@ mod patterncmds;
 pub mod pdfcmds;
 pub mod perspgrid;
 pub(crate) mod place;
+pub mod plantools;
 pub mod plugin;
 pub mod prefscmds;
 pub mod print;
@@ -286,6 +287,7 @@ pub fn command_specs() -> &'static [CommandSpec] {
         v.extend(coord::specs());
         v.extend(levellines::specs());
         v.extend(underlay::specs());
+        v.extend(plantools::specs());
         v
     })
 }

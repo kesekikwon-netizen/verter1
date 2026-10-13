@@ -101,7 +101,7 @@ fn drawing(app: &mut VectorcraftApp, ui: &mut Ui, room: Rect, t: &Tokens) {
     x = divider(ui, x, cy, t);
     let mut x2 = x;
     label(tw!("When Closed"), t.text_dim, &mut x2);
-    x = dropdown_soon(ui, wid("ctl-closed", ()), pos2(x2, cy), tw!("When Closed"), tw!("Area and Perimeter"), "J009", t) + GAP;
+    x = when_closed_dropdown(ui, pos2(x2, cy), t) + GAP;
     x = divider(ui, x, cy, t);
     let mut x2 = x;
     label(tw!("Pen Pressure"), t.text_dim, &mut x2);
@@ -223,14 +223,32 @@ fn layer_field(app: &mut VectorcraftApp, ui: &mut Ui, at: Pos2, t: &Tokens) -> f
     r.right()
 }
 
-/// A drop-down a later job brings, `what` it sets showing `value`. Returns where it ends.
-fn dropdown_soon(ui: &Ui, id: egui::Id, at: Pos2, what: &str, value: &str, job: &str, t: &Tokens) -> f32 {
-    let w = width_of(ui, value, font(12.0)) + 8.0 + 8.0 + 8.0 + 8.0;
+/// J009: Drop-down for polygon closure action: Area and Perimeter, Area Only, Perimeter Only, Off.
+fn when_closed_dropdown(ui: &mut Ui, at: Pos2, t: &Tokens) -> f32 {
+    let mode_id = wid("ctl-closed-mode", ());
+    let mode = ui.data(|d| d.get_temp::<usize>(mode_id)).unwrap_or(0);
+    let options = [tw!("Area and Perimeter"), tw!("Area Only"), tw!("Perimeter Only"), tw!("Off")];
+    let cur_label = options.get(mode).copied().unwrap_or(options[0]);
+    let w = width_of(ui, cur_label, font(12.0)) + 26.0;
     let r = Rect::from_min_size(pos2(at.x, at.y - H / 2.0), vec2(w, H));
-    field_box(ui, r, t.panel_darker, t.input_border);
-    text(ui, pos2(r.left() + 8.0, at.y), Align2::LEFT_CENTER, value, font(12.0), t.text_disabled);
-    triangle(ui, pos2(r.right() - 8.0 - 4.0, at.y), 8.0, true, t.text_disabled);
-    soon_widget(ui, id, r, what, job);
+    let resp = ui.interact(r, wid("ctl-closed", ()), Sense::click());
+    field_box(ui, r, if resp.hovered() { t.panel } else { t.input }, t.input_border);
+    text(ui, pos2(r.left() + 8.0, at.y), Align2::LEFT_CENTER, cur_label, font(12.0), t.text);
+    triangle(ui, pos2(r.right() - 8.0 - 4.0, at.y), 8.0, true, t.text_dim);
+    let resp = resp.on_hover_text(tw!("Calculate plan metrics when closing polygons"));
+
+    let mut set_mode = None;
+    egui::Popup::menu(&resp).show(|ui| {
+        for (i, opt) in options.iter().enumerate() {
+            let row = ui.selectable_label(i == mode, *opt);
+            if row.clicked() {
+                set_mode = Some(i);
+            }
+        }
+    });
+    if let Some(m) = set_mode {
+        ui.data_mut(|d| d.insert_temp(mode_id, m));
+    }
     r.right()
 }
 

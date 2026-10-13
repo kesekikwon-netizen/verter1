@@ -4137,4 +4137,16 @@ lighting	Light	Lumière
 	Windows Ink	Windows Ink
 	Align Scanned Underlay	Aligner le calque sous-jacent scanné
 	Estimate Underlay Alignment	Estimer l'alignement du calque sous-jacent
+	Add Find Number	Ajouter un numéro de vestige
+	Add Posthole	Ajouter un trou de poteau
+	Add Section Line	Ajouter une ligne de coupe
+	Add Slope Hachure Ticks	Ajouter des hachures de talus
+	Add Spot Height	Ajouter un point d'altitude
+	Calculate Polygon Metrics	Calculer les mesures du polygone
+	Find Number Tool	Outil Numéro de vestige
+	Posthole Tool	Outil Trou de poteau
+	Section Line Tool	Outil Ligne de coupe
+	Set Feature Properties	Définir les propriétés de la structure
+	Slope Hachure Tool	Outil Hachures de talus
+	Spot Height Tool	Outil Point d'altitude
 
