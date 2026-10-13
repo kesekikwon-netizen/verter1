@@ -6,7 +6,7 @@ name: Trowel CI
 
 on:
   push:
-    branches: ["claude/**"]
+    branches: ["main", "claude/**"]
   pull_request:
   workflow_dispatch:
 
