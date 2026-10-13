@@ -411,6 +411,9 @@ pub struct VectorcraftApp {
     /// This frame carries input the control channel injected ([`Self::raw_input_hook`]): it runs
     /// confined to [`Self::automation_roots`].
     synthetic_frame: bool,
+    /// Spring-loaded Z Loupe: temporary zoom tool while Z is held (> 0.3s or dragged).
+    pub(crate) spring_zoom: Option<shortcuts::SpringZoom>,
+    pub(crate) spring_zoom_revert: Option<String>,
 }
 
 /// A window capture asked for through the control channel (`ui.screenshot`), answered once a
@@ -494,6 +497,8 @@ impl VectorcraftApp {
             scrub_group: false,
             automation_roots: None,
             synthetic_frame: false,
+            spring_zoom: None,
+            spring_zoom_revert: None,
         }
     }
 
@@ -670,6 +675,10 @@ impl VectorcraftApp {
 
     /// Select a tool (also used by the toolbar and shortcuts).
     pub fn select_tool(&mut self, id: &str) {
+        if id != "zoom" {
+            self.spring_zoom = None;
+            self.spring_zoom_revert = None;
+        }
         let v = self.view_info();
         if let Err(e) = self.session.select_tool(id, v) {
             self.status(e.to_string());

@@ -61,7 +61,7 @@ impl Xf {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-enum Drag {
+pub(crate) enum Drag {
     Tool,
     /// Hand tool / Space drag, or a middle-button drag with any tool (`middle`).
     Pan {
@@ -92,8 +92,12 @@ enum Drag {
     Gesture,
 }
 
-fn drag_id() -> egui::Id {
+pub(crate) fn drag_id() -> egui::Id {
     egui::Id::new("canvas-drag")
+}
+
+pub(crate) fn is_dragging(ctx: &egui::Context) -> bool {
+    ctx.data(|d| d.get_temp::<Drag>(drag_id())).is_some()
 }
 /// Where the pointer was last seen during a press on the canvas.
 fn drag_pos_id() -> egui::Id {
@@ -624,12 +628,22 @@ fn handle_input(app: &mut VectorcraftApp, ui: &Ui, resp: &egui::Response, rect: 
                         vm.rotation = vectorcraft_geom::normalize_deg(deg);
                     }
                 }
-                Drag::ZoomBox { start } => marquee(ui.painter(), egui::Rect::from_two_pos(start, p)),
+                Drag::ZoomBox { start } => {
+                    if (p - start).length() > SCRUB_SLOP
+                        && let Some(sz) = app.spring_zoom.as_mut()
+                    {
+                        sz.dragged = true;
+                    }
+                    marquee(ui.painter(), egui::Rect::from_two_pos(start, p));
+                }
                 Drag::ZoomScrub { start, held, moved } => {
                     let dt = ui.input(|i| i.unstable_dt).min(0.25);
                     // Read before the view is borrowed below.
                     let left_in = zoom_drag_left_in(&app.session.prefs);
                     let (held, moved) = (held + dt, moved || (p - start).length() > SCRUB_SLOP);
+                    if moved && let Some(sz) = app.spring_zoom.as_mut() {
+                        sz.dragged = true;
+                    }
                     // Dragged sideways it zooms with the pointer (left in by default; with Drag
                     // left to zoom in off, right in), held still it zooms on (Alt: out).
                     let exponent = if moved {
@@ -696,6 +710,9 @@ fn handle_input(app: &mut VectorcraftApp, ui: &Ui, resp: &egui::Response, rect: 
                 }
                 Drag::Art | Drag::Gesture => {}
                 Drag::Pan { .. } | Drag::RotateView { .. } => {}
+            }
+            if let Some(prev) = app.spring_zoom_revert.take() {
+                app.select_tool(&prev);
             }
         }
     } else if let Some(p) = hover

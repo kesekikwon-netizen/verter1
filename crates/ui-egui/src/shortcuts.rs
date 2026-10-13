@@ -123,6 +123,14 @@ pub(crate) fn paste_command(held: Modifiers) -> &'static str {
         .map_or("edit.paste", |(_, id, _)| id)
 }
 
+/// Spring-loaded Z Loupe (J002b): temporary zoom tool when Z is held (> 0.3s or dragged).
+#[derive(Clone, Debug, PartialEq)]
+pub struct SpringZoom {
+    pub previous_tool: String,
+    pub pressed_time: f64,
+    pub dragged: bool,
+}
+
 /// Keyboard pastes of something other than text. egui swallows a paste chord's key press and
 /// sends a Paste event only when the clipboard holds text, so a paste key released without its
 /// press (or a Paste event) reported was a paste of a bitmap or a PDF.
@@ -206,6 +214,10 @@ fn type_text(app: &mut VectorcraftApp, ctx: &egui::Context) {
 }
 
 pub fn handle(app: &mut VectorcraftApp, ctx: &egui::Context) {
+    if ctx.input(|i| i.events.iter().any(|e| matches!(e, egui::Event::WindowFocused(false)))) {
+        app.spring_zoom = None;
+        app.spring_zoom_revert = None;
+    }
     // Followed before anything returns, so a key typed in a field isn't taken for a paste.
     let textless_paste = ctx.input(|i| app.paste_chord.textless_paste(&i.events));
     // A numeric field being scrubbed has the keyboard: Escape cancels the drag.
@@ -223,10 +235,17 @@ pub fn handle(app: &mut VectorcraftApp, ctx: &egui::Context) {
         if ctx.input(|i| i.key_pressed(Key::Escape)) {
             crate::dialogs::cancel(app);
             app.ui.palette_open = false;
+            app.spring_zoom = None;
+            app.spring_zoom_revert = None;
         }
         return;
     }
     let typing = ctx.egui_wants_keyboard_input();
+    if typing {
+        app.spring_zoom = None;
+        app.spring_zoom_revert = None;
+        return;
+    }
     let view = app.view_info();
     // While an IME composes, Enter and Escape are its own (confirm / cancel).
     let composing = app.session.tool_composing();
@@ -450,7 +469,34 @@ pub fn handle(app: &mut VectorcraftApp, ctx: &egui::Context) {
             continue;
         }
         if let Some(t) = lookup(crate::shortcut_editor::tool_for_key) {
+            if t == "zoom" && !m.shift {
+                let current = app.session.tool_id();
+                if current != "zoom" {
+                    app.spring_zoom = Some(SpringZoom { previous_tool: current.to_string(), pressed_time: ctx.input(|i| i.time), dragged: false });
+                }
+            } else {
+                app.spring_zoom = None;
+                app.spring_zoom_revert = None;
+            }
             app.select_tool(t);
+        }
+    }
+    // Spring-loaded Z Loupe (J002b): release of Z key reverts to previous tool if held > 0.3s or dragged.
+    let z_released = ctx.input(|i| {
+        i.events.iter().any(|e| match e {
+            egui::Event::Key { key, physical_key, pressed: false, .. } => *key == Key::Z || *physical_key == Some(Key::Z),
+            _ => false,
+        })
+    });
+    if z_released && let Some(sz) = app.spring_zoom.take() {
+        let now = ctx.input(|i| i.time);
+        let held = now - sz.pressed_time;
+        if sz.dragged || held > 0.3 {
+            if crate::canvas::is_dragging(ctx) {
+                app.spring_zoom_revert = Some(sz.previous_tool);
+            } else {
+                app.select_tool(&sz.previous_tool);
+            }
         }
     }
 }
@@ -808,5 +854,132 @@ mod tests {
                 assert!(parse(c.2).is_some(), "{} has unparsable shortcut {}", c.0, c.2);
             }
         }
+    }
+
+    fn run_frame(app: &mut VectorcraftApp, ctx: &egui::Context, events: Vec<egui::Event>, time: f64) {
+        let mut out = ctx.run_ui(egui::RawInput { events, time: Some(time), ..Default::default() }, |ui| {
+            handle(app, ui.ctx());
+        });
+        out.textures_delta.clear();
+    }
+
+    /// J002b: Tapping Z (< 0.3s without drag) switches permanently to Zoom tool.
+    #[test]
+    fn tap_z_switches_to_zoom_and_stays() {
+        let mut app = VectorcraftApp::new(vectorcraft_engine::Session::new(), Default::default());
+        app.session.execute("file.new", &json!({"width": 200, "height": 200})).unwrap();
+        app.select_tool("selection");
+        let ctx = egui::Context::default();
+        let z_down = egui::Event::Key { key: Key::Z, physical_key: None, pressed: true, repeat: false, modifiers: Modifiers::NONE };
+        let z_text = egui::Event::Text("z".into());
+        let z_up = egui::Event::Key { key: Key::Z, physical_key: None, pressed: false, repeat: false, modifiers: Modifiers::NONE };
+
+        // Frame 1 at t=1.0: press Z
+        run_frame(&mut app, &ctx, vec![z_down, z_text], 1.0);
+        assert_eq!(app.session.tool_id(), "zoom");
+        assert!(app.spring_zoom.is_some());
+
+        // Frame 2 at t=1.1 (0.1s later <= 0.3s): release Z without drag
+        run_frame(&mut app, &ctx, vec![z_up], 1.1);
+        assert_eq!(app.session.tool_id(), "zoom", "short tap must keep zoom tool");
+        assert!(app.spring_zoom.is_none());
+    }
+
+    /// J002b: Holding Z (> 0.3s) borrows Zoom tool and reverts to previous tool on release.
+    #[test]
+    fn hold_z_more_than_point_three_seconds_reverts_to_previous_tool() {
+        let mut app = VectorcraftApp::new(vectorcraft_engine::Session::new(), Default::default());
+        app.session.execute("file.new", &json!({"width": 200, "height": 200})).unwrap();
+        app.select_tool("pen");
+        let ctx = egui::Context::default();
+        let z_down = egui::Event::Key { key: Key::Z, physical_key: None, pressed: true, repeat: false, modifiers: Modifiers::NONE };
+        let z_text = egui::Event::Text("z".into());
+        let z_up = egui::Event::Key { key: Key::Z, physical_key: None, pressed: false, repeat: false, modifiers: Modifiers::NONE };
+
+        // Frame 1 at t=1.0: press Z
+        run_frame(&mut app, &ctx, vec![z_down, z_text], 1.0);
+        assert_eq!(app.session.tool_id(), "zoom");
+        assert_eq!(app.spring_zoom.as_ref().unwrap().previous_tool, "pen");
+
+        // Frame 2 at t=1.4 (0.4s later > 0.3s): release Z
+        run_frame(&mut app, &ctx, vec![z_up], 1.4);
+        assert_eq!(app.session.tool_id(), "pen", "holding Z > 0.3s must revert to previous tool");
+        assert!(app.spring_zoom.is_none());
+    }
+
+    /// J002b: Holding Z and dragging on canvas (< 0.3s) borrows Zoom tool and reverts on release.
+    #[test]
+    fn hold_z_and_drag_reverts_even_under_point_three_seconds() {
+        let mut app = VectorcraftApp::new(vectorcraft_engine::Session::new(), Default::default());
+        app.session.execute("file.new", &json!({"width": 200, "height": 200})).unwrap();
+        app.select_tool("pen");
+        let ctx = egui::Context::default();
+        let z_down = egui::Event::Key { key: Key::Z, physical_key: None, pressed: true, repeat: false, modifiers: Modifiers::NONE };
+        let z_text = egui::Event::Text("z".into());
+        let z_up = egui::Event::Key { key: Key::Z, physical_key: None, pressed: false, repeat: false, modifiers: Modifiers::NONE };
+
+        // Frame 1 at t=1.0: press Z
+        run_frame(&mut app, &ctx, vec![z_down, z_text], 1.0);
+        assert_eq!(app.session.tool_id(), "zoom");
+
+        // Drag happens on canvas
+        app.spring_zoom.as_mut().unwrap().dragged = true;
+
+        // Frame 2 at t=1.15 (0.15s <= 0.3s): release Z
+        run_frame(&mut app, &ctx, vec![z_up], 1.15);
+        assert_eq!(app.session.tool_id(), "pen", "drag while holding Z must revert to previous tool");
+        assert!(app.spring_zoom.is_none());
+    }
+
+    /// J002b: When already on Zoom tool, pressing/holding Z stays on Zoom tool.
+    #[test]
+    fn already_on_zoom_tool_holding_z_stays_on_zoom() {
+        let mut app = VectorcraftApp::new(vectorcraft_engine::Session::new(), Default::default());
+        app.session.execute("file.new", &json!({"width": 200, "height": 200})).unwrap();
+        app.select_tool("zoom");
+        let ctx = egui::Context::default();
+        let z_down = egui::Event::Key { key: Key::Z, physical_key: None, pressed: true, repeat: false, modifiers: Modifiers::NONE };
+        let z_text = egui::Event::Text("z".into());
+        let z_up = egui::Event::Key { key: Key::Z, physical_key: None, pressed: false, repeat: false, modifiers: Modifiers::NONE };
+
+        // Frame 1 at t=1.0: press Z
+        run_frame(&mut app, &ctx, vec![z_down, z_text], 1.0);
+        assert_eq!(app.session.tool_id(), "zoom");
+        assert!(app.spring_zoom.is_none(), "already on zoom tool should not create spring_zoom");
+
+        // Frame 2 at t=1.5: release Z
+        run_frame(&mut app, &ctx, vec![z_up], 1.5);
+        assert_eq!(app.session.tool_id(), "zoom");
+    }
+
+    /// J002b: Releasing Z while still dragging on canvas sets revert flag, and drag completion reverts to previous tool.
+    #[test]
+    fn releasing_z_while_canvas_is_dragging_reverts_on_drag_end() {
+        let mut app = VectorcraftApp::new(vectorcraft_engine::Session::new(), Default::default());
+        app.session.execute("file.new", &json!({"width": 200, "height": 200})).unwrap();
+        app.select_tool("pen");
+        let ctx = egui::Context::default();
+        let z_down = egui::Event::Key { key: Key::Z, physical_key: None, pressed: true, repeat: false, modifiers: Modifiers::NONE };
+        let z_text = egui::Event::Text("z".into());
+        let z_up = egui::Event::Key { key: Key::Z, physical_key: None, pressed: false, repeat: false, modifiers: Modifiers::NONE };
+
+        // Frame 1: press Z
+        run_frame(&mut app, &ctx, vec![z_down, z_text], 1.0);
+        assert_eq!(app.session.tool_id(), "zoom");
+
+        // Simulate active canvas drag
+        ctx.data_mut(|d| d.insert_temp(crate::canvas::drag_id(), crate::canvas::Drag::ZoomScrub { start: egui::Pos2::ZERO, held: 0.1, moved: true }));
+        app.spring_zoom.as_mut().unwrap().dragged = true;
+
+        // Frame 2: release Z while canvas is still dragging
+        run_frame(&mut app, &ctx, vec![z_up], 1.15);
+        assert_eq!(app.session.tool_id(), "zoom", "tool stays zoom while drag is in progress");
+        assert_eq!(app.spring_zoom_revert.as_deref(), Some("pen"));
+
+        // Drag ends: simulates pointer release logic in canvas.rs
+        if let Some(prev) = app.spring_zoom_revert.take() {
+            app.select_tool(&prev);
+        }
+        assert_eq!(app.session.tool_id(), "pen", "tool reverts to pen after drag completes");
     }
 }
