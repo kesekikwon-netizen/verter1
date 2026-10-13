@@ -4157,5 +4157,10 @@ lighting	Light	Luz
 	Set Artifact Centerline	Establecer eje del artefacto
 	Set Artifact Properties	Establecer propiedades del artefacto
 	Wall Cut Tool	Herramienta de corte de pared
+	Add Graphic Scale Bar	Añadir barra de escala gráfica
+	Add North Arrow	Añadir flecha de norte
+	Add Standard Title Block	Añadir cuadro de rotulación estándar
+	Generate Sheet Legend Table	Generar tabla de leyenda de lámina
+	Set Sheet Properties	Establecer propiedades de la lámina
 
 

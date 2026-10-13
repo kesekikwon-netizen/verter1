@@ -4152,4 +4152,9 @@ lighting	Light	ライト
 	Set Artifact Centerline	遺物中心線を設定
 	Set Artifact Properties	遺物プロパティを設定
 	Wall Cut Tool	器壁断面ツール
+	Add Graphic Scale Bar	グラフィックスケールバーを追加
+	Add North Arrow	北矢印を追加
+	Add Standard Title Block	標準標題欄を追加
+	Generate Sheet Legend Table	図版凡例表を生成
+	Set Sheet Properties	図版プロパティを設定
 

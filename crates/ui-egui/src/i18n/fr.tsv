@@ -4167,5 +4167,10 @@ lighting	Light	Lumière
 	Set Artifact Centerline	Définir l'axe de l'artéfact
 	Set Artifact Properties	Définir les propriétés de l'artéfact
 	Wall Cut Tool	Outil de coupe de paroi
+	Add Graphic Scale Bar	Ajouter une échelle graphique
+	Add North Arrow	Ajouter une flèche nord
+	Add Standard Title Block	Ajouter un cartouche standard
+	Generate Sheet Legend Table	Générer la table de légende de planche
+	Set Sheet Properties	Définir les propriétés de la planche
 
 

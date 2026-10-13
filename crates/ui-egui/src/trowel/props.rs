@@ -47,10 +47,11 @@ pub(super) fn show(app: &mut VectorcraftApp, ui: &mut Ui, r: Rect) {
     let left = r.left() + PAD;
     let fields = left + 40.0 + 6.0;
 
-    // Feature metadata and metrics from selection (J009, J010, J011):
-    let (cur_kind, cur_num, cur_period, metrics, axes, stratum_info, section_info, artifact_info) = if let Some(st) = app.session.active() {
+    // Feature metadata and metrics from selection (J009, J010, J011, J012):
+    let (cur_kind, cur_num, cur_period, metrics, axes, stratum_info, section_info, artifact_info, sheet_info) = if let Some(st) = app.session.active()
+    {
         let sel_node = st.selection.objects.first().copied().and_then(|id| st.doc.node(id));
-        let (k, n, p, maj, min, str_no, str_name, str_munsell, art_str) = sel_node
+        let (k, n, p, maj, min, str_no, str_name, str_munsell, art_str, sheet_str) = sel_node
             .and_then(|n| n.attrs.as_deref())
             .map(|a| {
                 let k = a.data.iter().find(|(k, _)| k == "feature_kind" || k == "feature:kind").map(|(_, v)| v.clone());
@@ -70,9 +71,17 @@ pub(super) fn show(app: &mut VectorcraftApp, ui: &mut Ui, r: Rect) {
                 } else {
                     art_diam.map(|d| format!("직경 {d} cm"))
                 };
-                (k, n, p, maj, min, s_no, s_name, s_mun, art_str)
+                let sheet_pn = a.data.iter().find(|(k, _)| k == "sheet:plate_no").map(|(_, v)| v.clone());
+                let sheet_ti = a.data.iter().find(|(k, _)| k == "sheet:title").map(|(_, v)| v.clone());
+                let sheet_st = match (sheet_pn, sheet_ti) {
+                    (Some(pn), Some(ti)) => Some(format!("{pn} · {ti}")),
+                    (Some(pn), None) => Some(pn),
+                    (None, Some(ti)) => Some(ti),
+                    (None, None) => None,
+                };
+                (k, n, p, maj, min, s_no, s_name, s_mun, art_str, sheet_st)
             })
-            .unwrap_or((None, None, None, None, None, None, None, None, None));
+            .unwrap_or((None, None, None, None, None, None, None, None, None, None));
 
         let m = sel_node.and_then(|node| match &node.kind {
             vectorcraft_doc::NodeKind::Path { path, .. } if path.is_closed() => {
@@ -110,9 +119,22 @@ pub(super) fn show(app: &mut VectorcraftApp, ui: &mut Ui, r: Rect) {
             })
         });
 
-        (k, n, p, m, ax, str_info, sec_info, art_info)
+        let sheet_info = sheet_str.or_else(|| {
+            st.doc.layers.first().and_then(|l| l.attrs.as_deref()).and_then(|a| {
+                let pn = a.data.iter().find(|(k, _)| k == "sheet:plate_no").map(|(_, v)| v.clone());
+                let ti = a.data.iter().find(|(k, _)| k == "sheet:title").map(|(_, v)| v.clone());
+                match (pn, ti) {
+                    (Some(pn), Some(ti)) => Some(format!("{pn} · {ti}")),
+                    (Some(pn), None) => Some(pn),
+                    (None, Some(ti)) => Some(ti),
+                    (None, None) => None,
+                }
+            })
+        });
+
+        (k, n, p, m, ax, str_info, sec_info, art_info, sheet_info)
     } else {
-        (None, None, None, None, None, None, None, None)
+        (None, None, None, None, None, None, None, None, None)
     };
 
     let kind_val = cur_kind.as_deref().unwrap_or(KINDS[0]);
@@ -202,6 +224,11 @@ pub(super) fn show(app: &mut VectorcraftApp, ui: &mut Ui, r: Rect) {
     if let Some(art) = artifact_info {
         let x = text(ui, pos2(left, cy), Align2::LEFT_CENTER, tw!("Artifact"), font(11.0), t.text_dim).right() + 4.0;
         text(ui, pos2(x, cy), Align2::LEFT_CENTER, art, font(11.0), t.text);
+        cy += 16.0;
+    }
+    if let Some(sheet) = sheet_info {
+        let x = text(ui, pos2(left, cy), Align2::LEFT_CENTER, tw!("Sheet"), font(11.0), t.text_dim).right() + 4.0;
+        text(ui, pos2(x, cy), Align2::LEFT_CENTER, sheet, font(11.0), t.text);
     }
 }
 

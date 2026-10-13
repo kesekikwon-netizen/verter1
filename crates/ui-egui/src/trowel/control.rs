@@ -163,6 +163,59 @@ fn drawing(app: &mut VectorcraftApp, ui: &mut Ui, room: Rect, t: &Tokens) {
         x = btn_rect.right() + GAP;
         x = divider(ui, x, cy, t);
     }
+    if tool_id == "rectangle" || tool_id == "lineSegment" || tool_id == "pen" {
+        let btn_text = tw!("North Arrow");
+        let btn_w = width_of(ui, btn_text, font(12.0)) + 14.0;
+        let btn_rect = Rect::from_min_size(pos2(x, cy - H / 2.0), vec2(btn_w, H));
+        let resp = ui.interact(btn_rect, wid("ctl-sheet-north", ()), Sense::click());
+        let fill = if resp.hovered() { t.hover } else { t.panel_darker };
+        ui.painter().rect(btn_rect, CornerRadius::same(6), fill, Stroke::new(1.0, t.border), StrokeKind::Inside);
+        text(ui, btn_rect.center(), Align2::CENTER_CENTER, btn_text, font(12.0), t.text);
+        if resp.on_hover_text(tw!("Add standard 28mm needle north arrow to plate")).clicked() {
+            app.run("sheet.addNorthArrow", json!({})).ok();
+        }
+        x = btn_rect.right() + GAP;
+        x = divider(ui, x, cy, t);
+
+        let btn_text = tw!("Scale Bar");
+        let btn_w = width_of(ui, btn_text, font(12.0)) + 14.0;
+        let btn_rect = Rect::from_min_size(pos2(x, cy - H / 2.0), vec2(btn_w, H));
+        let resp = ui.interact(btn_rect, wid("ctl-sheet-scalebar", ()), Sense::click());
+        let fill = if resp.hovered() { t.hover } else { t.panel_darker };
+        ui.painter().rect(btn_rect, CornerRadius::same(6), fill, Stroke::new(1.0, t.border), StrokeKind::Inside);
+        text(ui, btn_rect.center(), Align2::CENTER_CENTER, btn_text, font(12.0), t.text);
+        if resp.on_hover_text(tw!("Add composite graphic scale bar (SCALE 1:S) to plate")).clicked() {
+            app.run("sheet.addScaleBar", json!({})).ok();
+        }
+        x = btn_rect.right() + GAP;
+        x = divider(ui, x, cy, t);
+
+        let btn_text = tw!("Title Block");
+        let btn_w = width_of(ui, btn_text, font(12.0)) + 14.0;
+        let btn_rect = Rect::from_min_size(pos2(x, cy - H / 2.0), vec2(btn_w, H));
+        let resp = ui.interact(btn_rect, wid("ctl-sheet-titleblock", ()), Sense::click());
+        let fill = if resp.hovered() { t.hover } else { t.panel_darker };
+        ui.painter().rect(btn_rect, CornerRadius::same(6), fill, Stroke::new(1.0, t.border), StrokeKind::Inside);
+        text(ui, btn_rect.center(), Align2::CENTER_CENTER, btn_text, font(12.0), t.text);
+        if resp.on_hover_text(tw!("Add standard 4-row archaeological title block to plate")).clicked() {
+            app.run("sheet.addTitleBlock", json!({})).ok();
+        }
+        x = btn_rect.right() + GAP;
+        x = divider(ui, x, cy, t);
+
+        let btn_text = tw!("Legend Table");
+        let btn_w = width_of(ui, btn_text, font(12.0)) + 14.0;
+        let btn_rect = Rect::from_min_size(pos2(x, cy - H / 2.0), vec2(btn_w, H));
+        let resp = ui.interact(btn_rect, wid("ctl-sheet-legend", ()), Sense::click());
+        let fill = if resp.hovered() { t.hover } else { t.panel_darker };
+        ui.painter().rect(btn_rect, CornerRadius::same(6), fill, Stroke::new(1.0, t.border), StrokeKind::Inside);
+        text(ui, btn_rect.center(), Align2::CENTER_CENTER, btn_text, font(12.0), t.text);
+        if resp.on_hover_text(tw!("Extract active layers and generate plate legend table")).clicked() {
+            app.run("sheet.generateLegendTable", json!({})).ok();
+        }
+        x = btn_rect.right() + GAP;
+        x = divider(ui, x, cy, t);
+    }
     p.text(pos2(x, cy), Align2::LEFT_CENTER, tw!("Weight, hatch and line type: in the Drawing Palette at the right"), font(12.0), t.text_disabled);
 }
 

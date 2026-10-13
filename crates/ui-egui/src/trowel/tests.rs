@@ -2991,3 +2991,108 @@ fn test_j011_artifact_drafting_view_integration() {
     assert!(right_line.contains("저경"), "{}", right_line);
     assert!(right_line.contains("기고"), "{}", right_line);
 }
+
+/// J012: Comprehensive integration test for Sheet Layout & PDF publication elements:
+/// 1. Standard 28mm needle north arrow (도북 방위) on '방위표' layer.
+/// 2. Composite graphic scale bar (복합 축척 막대, SCALE 1:S) on '축척 막대' layer.
+/// 3. Standard 4-row archaeological title block (국가유산 정규 표제란) on '표제란' layer.
+/// 4. Extracted legend table (자동 추출 범례표) on '범례표' layer.
+/// 5. Control bar quick action buttons and Properties panel Sheet metadata readout.
+#[test]
+fn test_j012_sheet_and_pdf_integration() {
+    let mut h = Harness::new();
+
+    // 1. Create standard A3 landscape drawing
+    h.app
+        .run(
+            "file.new",
+            json!({
+                "width": 1190, // A3 width pt
+                "height": 842  // A3 height pt
+            }),
+        )
+        .unwrap();
+
+    // 2. Add North Arrow
+    let north_res = h
+        .app
+        .run(
+            "sheet.addNorthArrow",
+            json!({
+                "x": 1050.0,
+                "y": 120.0,
+                "size_pt": 79.37
+            }),
+        )
+        .unwrap();
+    assert_eq!(north_res["size_pt"], 79.37);
+
+    // 3. Add Scale Bar
+    let scale_res = h
+        .app
+        .run(
+            "sheet.addScaleBar",
+            json!({
+                "x": 100.0,
+                "y": 720.0,
+                "scale_ratio": 40.0,
+                "total_m": 5.0
+            }),
+        )
+        .unwrap();
+    assert_eq!(scale_res["scale_ratio"], 40.0);
+    assert!(scale_res["length_pt"].as_f64().unwrap() > 0.0);
+
+    // 4. Add Title Block
+    let title_res = h
+        .app
+        .run(
+            "sheet.addTitleBlock",
+            json!({
+                "x": 800.0,
+                "y": 700.0,
+                "site": "경주 황오동 고분군 발굴조사",
+                "title": "1호 주거지 종합도판",
+                "scale": "1:40 (단면 1:20)",
+                "institute": "국립문화유산연구원",
+                "date": "2026. 10",
+                "plate_no": "PLATE 3"
+            }),
+        )
+        .unwrap();
+    assert_eq!(title_res["plate_no"], "PLATE 3");
+    let title_id = title_res["id"].as_u64().unwrap();
+
+    // 5. Generate Legend Table
+    let legend_res = h
+        .app
+        .run(
+            "sheet.generateLegendTable",
+            json!({
+                "x": 100.0,
+                "y": 500.0,
+                "width": 180.0
+            }),
+        )
+        .unwrap();
+    assert!(legend_res["rows"].as_u64().unwrap() >= 1);
+
+    // 6. Verify Control Bar quick action buttons when rectangle drawing tool is active
+    h.app.select_tool("rectangle");
+    h.settle();
+    let ctrl_bar = h.panel(CONTROL);
+    assert!(ctrl_bar.is_positive(), "control bar is present");
+    assert!(h.rect(wid("ctl-sheet-north", ())).is_some(), "North Arrow quick button");
+    assert!(h.rect(wid("ctl-sheet-scalebar", ())).is_some(), "Scale Bar quick button");
+    assert!(h.rect(wid("ctl-sheet-titleblock", ())).is_some(), "Title Block quick button");
+    assert!(h.rect(wid("ctl-sheet-legend", ())).is_some(), "Legend Table quick button");
+
+    // 7. Verify Properties Panel Sheet metadata readout when Title Block is selected
+    h.app.run("select.set", json!({"ids": [title_id]})).unwrap();
+    h.settle();
+    let right = h.panel(RIGHT);
+    let right_line = h.line_in(right);
+    assert!(right_line.contains("Sheet"), "{}", right_line);
+    assert!(right_line.contains("PLATE 3"), "{}", right_line);
+    assert!(right_line.contains("1호 주거지 종합도판"), "{}", right_line);
+}

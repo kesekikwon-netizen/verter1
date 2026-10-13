@@ -69,6 +69,7 @@ mod recolor;
 pub mod recovery;
 mod select;
 pub(crate) mod shaper;
+pub mod sheettools;
 pub(crate) mod slices;
 pub mod stratatools;
 mod stroke;
@@ -292,6 +293,7 @@ pub fn command_specs() -> &'static [CommandSpec] {
         v.extend(plantools::specs());
         v.extend(stratatools::specs());
         v.extend(artifacttools::specs());
+        v.extend(sheettools::specs());
         v
     })
 }

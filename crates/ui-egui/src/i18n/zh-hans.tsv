@@ -3786,5 +3786,10 @@ lighting	Light	光源
 	Set Artifact Centerline	设置器物中心线
 	Set Artifact Properties	设置器物属性
 	Wall Cut Tool	器壁截面工具
+	Add Graphic Scale Bar	添加图形比例尺
+	Add North Arrow	添加指北针
+	Add Standard Title Block	添加标准标题栏
+	Generate Sheet Legend Table	生成图版图例表
+	Set Sheet Properties	设置图版属性
 
 

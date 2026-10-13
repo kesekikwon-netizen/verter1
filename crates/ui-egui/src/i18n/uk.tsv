@@ -4138,5 +4138,10 @@ lighting	Light	Світло
 	Set Artifact Centerline	Встановити осьову лінію артефакту
 	Set Artifact Properties	Задати властивості артефакту
 	Wall Cut Tool	Інструмент перерізу стінки
+	Add Graphic Scale Bar	Додати графічну масштабну лінійку
+	Add North Arrow	Додати стрілку півночі
+	Add Standard Title Block	Додати стандартний кутовий штамп
+	Generate Sheet Legend Table	Створити таблицю легенди планшета
+	Set Sheet Properties	Задати властивості планшета
 
 

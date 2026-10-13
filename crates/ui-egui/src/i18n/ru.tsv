@@ -4155,5 +4155,10 @@ lighting	Light	Свет
 	Set Artifact Centerline	Установить осевую линию артефакта
 	Set Artifact Properties	Задать свойства артефакта
 	Wall Cut Tool	Инструмент сечения стенки
+	Add Graphic Scale Bar	Добавить графическую масштабную линейку
+	Add North Arrow	Добавить стрелку севера
+	Add Standard Title Block	Добавить стандартный штамп
+	Generate Sheet Legend Table	Создать таблицу легенды планшета
+	Set Sheet Properties	Задать свойства планшета
 
 
