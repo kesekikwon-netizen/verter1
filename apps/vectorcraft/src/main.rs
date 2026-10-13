@@ -392,6 +392,7 @@ fn set_taskbar_icon(w: &winit::window::Window) {
 
 /// J016 (A1): Disables Windows Ink press-and-hold animations and flicks to eliminate stylus latency.
 #[cfg(windows)]
+#[allow(unsafe_code)]
 fn disable_pen_gestures(w: &winit::window::Window) {
     use winit::raw_window_handle::{HasWindowHandle, RawWindowHandle};
     if let Ok(handle) = w.window_handle() {
@@ -399,7 +400,7 @@ fn disable_pen_gestures(w: &winit::window::Window) {
             let hwnd = win32.hwnd.get();
             // TABLET_DISABLE_PRESSANDHOLD (0x01) | TABLET_DISABLE_PENTAPFEEDBACK (0x08) | TABLET_DISABLE_FLICKS (0x10000)
             const FLAGS: usize = 0x00010019;
-            extern "system" {
+            unsafe extern "system" {
                 fn SetPropW(hwnd: *mut std::ffi::c_void, name: *const u16, data: *mut std::ffi::c_void) -> i32;
             }
             let prop: Vec<u16> = "MicrosoftTabletPenServiceProperty\0".encode_utf16().collect();
