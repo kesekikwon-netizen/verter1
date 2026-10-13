@@ -601,6 +601,7 @@ fn calculate_section_metrics(s: &mut Session, p: &Value) -> Result<Value> {
 
     let mut min_x = f64::INFINITY;
     let mut max_x = f64::NEG_INFINITY;
+    let mut min_y = f64::INFINITY;
     let mut max_y = f64::NEG_INFINITY;
 
     doc.walk(|n| {
@@ -614,13 +615,20 @@ fn calculate_section_metrics(s: &mut Session, p: &Value) -> Result<Value> {
             if bb.max_x() > max_x {
                 max_x = bb.max_x();
             }
+            if bb.min_y() < min_y {
+                min_y = bb.min_y();
+            }
             if bb.max_y() > max_y {
                 max_y = bb.max_y();
             }
         }
     });
 
-    let datum_y = p.get("datum_y").and_then(Value::as_f64).unwrap_or(min_x.min(100.0));
+    let stored_datum_y = doc.layers.first().and_then(|l| doc.node(l.id)).and_then(|n| n.attrs.as_ref()).and_then(|a| {
+        a.data.iter().find(|(k, _)| k == "section:datum_y").and_then(|(_, v)| v.parse::<f64>().ok())
+    });
+
+    let datum_y = p.get("datum_y").and_then(Value::as_f64).or(stored_datum_y).unwrap_or_else(|| if min_y.is_finite() { min_y } else { 100.0 });
 
     let width_pt = if min_x.is_finite() && max_x.is_finite() && max_x > min_x { max_x - min_x } else { 0.0 };
     let depth_pt = if max_y.is_finite() && max_y > datum_y { max_y - datum_y } else { 0.0 };
@@ -750,5 +758,35 @@ mod tests {
             .unwrap();
         assert_eq!(res["label"], "소토면");
         assert_eq!(res["points"], 3);
+    }
+
+    #[test]
+    fn test_section_props_and_metrics_and_rollback() {
+        let mut s = session_with_doc();
+        s.execute("section.setProps", &json!({"name": "A-A' 남벽", "datum_el": 150.0, "datum_y": 100.0})).unwrap();
+
+        // Draw a stratum boundary line
+        s.execute(
+            "drawing.addStratumLine",
+            &json!({
+                "anchors": [[100.0, 100.0], [200.0, 150.0], [300.0, 200.0]]
+            }),
+        )
+        .unwrap();
+
+        let m = s.execute("section.calculateMetrics", &json!({})).unwrap();
+        assert!((m["width_pt"].as_f64().unwrap() - 200.0).abs() < 1e-4);
+        assert!((m["max_depth_pt"].as_f64().unwrap() - 100.0).abs() < 1e-4);
+
+        // Test transaction rollback
+        s.execute("edit.undo", &json!({})).unwrap();
+        let doc_after_undo = &s.doc().unwrap().doc;
+        let count = doc_after_undo.layers.iter().find(|l| l.display_name() == "토층선").map(|l| l.children().map(|c| c.len()).unwrap_or(0)).unwrap_or(0);
+        assert_eq!(count, 0, "undo rolls back created stratum line");
+
+        s.execute("edit.redo", &json!({})).unwrap();
+        let doc_after_redo = &s.doc().unwrap().doc;
+        let count_redo = doc_after_redo.layers.iter().find(|l| l.display_name() == "토층선").map(|l| l.children().map(|c| c.len()).unwrap_or(0)).unwrap_or(0);
+        assert_eq!(count_redo, 1, "redo restores stratum line");
     }
 }
