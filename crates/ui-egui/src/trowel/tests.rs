@@ -1670,7 +1670,8 @@ fn weights_card_previews_and_applies_a_ratio() {
             .collect();
         assert!(row.contains(from) && row.contains(to), "{names}: {from} → {to} in {row:?}");
     }
-    assert!(line_in.contains("Lines that change: 1. One Ctrl+Z puts them all back."), "{line_in}");
+    let undo = if cfg!(target_os = "macos") { "⌘Z" } else { "Ctrl+Z" };
+    assert!(line_in.contains(&format!("Lines that change: 1. One {undo} puts them all back.")), "{line_in}");
     h.click(wid("weights-apply", ()));
     let legend = |h: &Harness, id: NodeId| h.app.session.active().unwrap().doc.node(id).unwrap().legend().cloned().unwrap();
     assert_eq!(legend(&h, pit).weight, Some(0.64));
@@ -1971,7 +1972,8 @@ fn the_weights_note_counts_rows_when_no_line_follows() {
     h.settle();
     h.click(wid("legend-weights", ()));
     let note = h.line_in(h.rect(wid("weights-card", ())).unwrap());
-    assert!(note.contains("Rows that change: 1. No line follows them. One Ctrl+Z puts them back."), "{note}");
+    let undo = if cfg!(target_os = "macos") { "⌘Z" } else { "Ctrl+Z" };
+    assert!(note.contains(&format!("Rows that change: 1. No line follows them. One {undo} puts them back.")), "{note}");
     assert!(!note.contains("Lines that change"), "{note}");
 }
 
