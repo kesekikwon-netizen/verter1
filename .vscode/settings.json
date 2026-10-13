@@ -1,0 +1,10 @@
+{
+  "rust-analyzer.check.command": "clippy",
+  "rust-analyzer.cargo.extraEnv": {
+    "CARGO_PROFILE_DEV_DEBUG": "0"
+  },
+  "rust-analyzer.cargo.allFeatures": false,
+  "editor.formatOnSave": true,
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true
+}
