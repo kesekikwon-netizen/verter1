@@ -38,6 +38,8 @@ enum Ask {
     Select,
     Revert,
     Options,
+    SaveDefaults,
+    SaveTemplate,
     /// Points typed that aren't a weight.
     NotAWeight,
 }
@@ -101,6 +103,21 @@ pub(super) fn show(app: &mut VectorcraftApp, ctx: &egui::Context, place: card::P
                 open = false;
                 Ok(())
             }
+            Ask::SaveDefaults => match app.run("style.setDefaults", json!({})) {
+                Ok(_) => {
+                    app.status(tw!("Saved current legend styles as My Defaults"));
+                    Ok(())
+                }
+                Err(e) => Err(e),
+            },
+            Ask::SaveTemplate => match app.run("style.exportTrowelStyle", json!({})) {
+                Ok(v) => {
+                    let name = v["name"].as_str().unwrap_or("Style");
+                    app.status(crate::i18n::fmt(tw!("Exported {name} template"), &[("name", name)]));
+                    Ok(())
+                }
+                Err(e) => Err(e),
+            },
             Ask::NotAWeight => Err(tw!("Type a weight in points, such as 0.5").to_string()),
         };
         if let Err(e) = done {
@@ -130,7 +147,7 @@ fn body(ui: &mut Ui, row: &Row, t: &Tokens) -> Vec<Ask> {
             asks.push(Ask::Set(json!({ "favourite": !row.legend.favourite })));
         }
         lines_of(ui, row, t, &mut asks);
-        saved_in(ui, t);
+        saved_in(ui, t, &mut asks);
     });
     let places = card::flow(ui, 28.0, &[card::button_w(ui, tw!("Layer Options…"))]);
     if let Some(r) = places.first()
@@ -281,13 +298,27 @@ fn lines_of(ui: &mut Ui, row: &Row, t: &Tokens, asks: &mut Vec<Ask>) {
 }
 
 /// Where the row is kept: in the drawing for now; a survey's rows (J004), the user's defaults and
-/// template files (J018) come later.
-fn saved_in(ui: &mut Ui, t: &Tokens) {
+/// template files (J018).
+fn saved_in(ui: &mut Ui, t: &Tokens, asks: &mut Vec<Ask>) {
     card::caption(ui, tw!("Saved in"), t);
     let places = [("survey", tw!("This Survey Only"), "J004"), ("defaults", tw!("My Defaults"), "J018"), ("template", tw!("Template File"), "J018")];
     let widths: Vec<f32> = places.iter().map(|(_, label, _)| toggle_rect(ui, Pos2::ZERO, ROW_H, label).width()).collect();
     for ((key, label, job), r) in places.iter().zip(card::flow(ui, ROW_H, &widths)) {
-        toggle_soon(ui, wid("card-saved", *key), r, label, job, t);
+        if *key == "defaults" {
+            let resp = toggle(ui, wid("card-saved", *key), r, label, false, t);
+            if resp.clicked() {
+                asks.push(Ask::SaveDefaults);
+            }
+            resp.on_hover_text(tw!("Set active legend styling as My Defaults"));
+        } else if *key == "template" {
+            let resp = toggle(ui, wid("card-saved", *key), r, label, false, t);
+            if resp.clicked() {
+                asks.push(Ask::SaveTemplate);
+            }
+            resp.on_hover_text(tw!("Export active legend styling as .trowel-style template"));
+        } else {
+            toggle_soon(ui, wid("card-saved", *key), r, label, job, t);
+        }
     }
     card::note(ui, tw!("Saved in this drawing file for now"), t.text_dim);
 }

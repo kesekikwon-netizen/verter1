@@ -363,6 +363,8 @@ pub const PREF_SPECS: &[PrefSpec] = &[
     // File Handling (continued)
     p!("templatesFolder", "File Handling", "Files", "Templates Folder", text),
     p!("appendConverted", "File Handling", "Files", "Mark Older Files as [Converted] When Opened", bool),
+    p!("trowelDefaultStyle", "File Handling", "Files", "Default Style Template", text),
+    p!("trowelCustomWeights", "General", "Options", "Custom Stroke Weights", text),
     // Native saves (`document.save {compress}`)
     p!("useCompression", "File Handling", "Files", "Use Compression", bool),
     // The W/H link of the Transform panel, the Properties panel and the Control bar

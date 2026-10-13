@@ -4496,3 +4496,23 @@ trowel	Invert to Eraser on Stylus Eraser Tip	지우개 끝 접촉 시 임시 지
 trowel	Stylus Tip	펜촉
 trowel	Eraser Tip	지우개 끝
 trowel	Barrel Active	옆버튼 동작
+	Add Custom Stroke Weight	사용자 선 굵기 추가
+	Apply My Default Style	내 기본 스타일 적용
+	Custom Stroke Weights	사용자 정의 선 굵기
+	Default Style Template	기본 스타일 서식
+	Export Trowel Style	Trowel 스타일 내보내기
+	Get My Default Style	내 기본 스타일 가져오기
+	Import Trowel Style	Trowel 스타일 불러오기
+	Set My Default Style	내 기본 스타일로 지정
+trowel	Add custom stroke weight	사용자 선 굵기 추가
+trowel	Added custom stroke weight {w} pt	사용자 선 굵기 {w} pt를 추가했습니다
+trowel	Applied default style: {added} added, {modded} updated	기본 스타일을 적용했습니다: {added}개 추가, {modded}개 수정
+trowel	Apply My Defaults or imported style template to active document	내 기본값 또는 불러온 스타일 서식을 현재 도면에 적용합니다
+trowel	Export active legend styling as .trowel-style template	현재 범례 서식을 .trowel-style 서식 파일로 내보냅니다
+trowel	Export layer and legend styling as .trowel-style specification	도면 레이어 및 범례 서식을 .trowel-style 파일로 내보냅니다
+trowel	Exported {name} ({layers} layers)	{name} 스타일을 내보냈습니다 ({layers}개 레이어)
+trowel	Exported {name} template	{name} 서식 파일을 내보냈습니다
+trowel	Generate publication legend table with used drawing layers	작도에 사용된 레이어로 출판용 범례표를 생성합니다
+trowel	Legend Table: generated with {rows} active layers	범례표: 사용된 {rows}개 레이어로 생성했습니다
+trowel	Saved current legend styles as My Defaults	현재 범례 서식을 내 기본값으로 저장했습니다
+trowel	Set active legend styling as My Defaults	현재 범례 서식을 내 기본값으로 지정합니다

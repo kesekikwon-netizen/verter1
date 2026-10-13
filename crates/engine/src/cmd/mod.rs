@@ -82,6 +82,7 @@ mod textedit;
 pub mod textstyles;
 pub(crate) mod textwrap;
 pub(crate) mod threads;
+pub mod trowelstyle;
 pub(crate) mod typecmd;
 mod typemenu;
 pub mod underlay;
@@ -294,6 +295,7 @@ pub fn command_specs() -> &'static [CommandSpec] {
         v.extend(stratatools::specs());
         v.extend(artifacttools::specs());
         v.extend(sheettools::specs());
+        v.extend(trowelstyle::specs());
         v
     })
 }

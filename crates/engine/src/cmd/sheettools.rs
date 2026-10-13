@@ -6,7 +6,7 @@
 use serde_json::{Value, json};
 use vectorcraft_color::{Color, Paint};
 use vectorcraft_doc::legend::{Legend, LegendSample, LineType};
-use vectorcraft_doc::{Appearance, CharStyle, Document, Node, NodeId, NodeKind, TextObject};
+use vectorcraft_doc::{Appearance, CharStyle, Dash, Document, Hatch, Node, NodeId, NodeKind, TextObject};
 use vectorcraft_geom::{PathData, Point, Rect, SubPath, shapes};
 
 use super::layer::make_layer;
@@ -345,19 +345,40 @@ fn generate_legend_table(s: &mut Session, p: &Value) -> Result<Value> {
 
     let doc = s.active().ok_or_else(|| bad("sheet.generateLegendTable", "no active document"))?;
 
+    let used_only = p.get("used_only").and_then(Value::as_bool).unwrap_or(true);
+
+    struct LegendRowInfo {
+        name: String,
+        weight: f64,
+        dash: Option<Dash>,
+        hatch: Hatch,
+    }
+
     // Collect layers with meaningful names (excluding sheet elements)
-    let mut legend_items = Vec::new();
+    let mut legend_items: Vec<LegendRowInfo> = Vec::new();
     for l in &doc.doc.layers {
         let name = l.display_name().trim().to_string();
         if !name.is_empty() && name != "표제란" && name != "방위표" && name != "축척 막대" && name != "범례표" {
-            legend_items.push(name);
+            let has_content = l.children().map_or(0, |c| c.len()) > 0;
+            if !used_only || has_content {
+                let weight = l.legend().and_then(|leg| leg.weight).unwrap_or(0.5);
+                let dash = l.legend().and_then(|leg| match &leg.line {
+                    LineType::Dashed => LineType::Dashed.dash_pt().map(|pattern| Dash { pattern, ..Dash::default() }),
+                    LineType::Dotted => LineType::Dotted.dash_pt().map(|pattern| Dash { pattern, ..Dash::default() }),
+                    LineType::DashDot => LineType::DashDot.dash_pt().map(|pattern| Dash { pattern, ..Dash::default() }),
+                    LineType::Custom(d) => Some(Dash { pattern: d.clone(), ..Dash::default() }),
+                    LineType::Solid => None,
+                });
+                let hatch = l.legend().map_or(Hatch::None, |leg| leg.hatch);
+                legend_items.push(LegendRowInfo { name, weight, dash, hatch });
+            }
         }
     }
 
     if legend_items.is_empty() {
-        legend_items.push("유구 윤곽선".into());
-        legend_items.push("토층 경계선".into());
-        legend_items.push("소토면".into());
+        legend_items.push(LegendRowInfo { name: "유구 윤곽선".into(), weight: 0.8, dash: None, hatch: Hatch::None });
+        legend_items.push(LegendRowInfo { name: "토층 경계선".into(), weight: 0.3, dash: None, hatch: Hatch::None });
+        legend_items.push(LegendRowInfo { name: "소토면".into(), weight: 0.2, dash: None, hatch: Hatch::Deg45 });
     }
 
     let row_h = 18.0;
@@ -393,20 +414,44 @@ fn generate_legend_table(s: &mut Session, p: &Value) -> Result<Value> {
         // Items
         let item_style =
             CharStyle { size: 8.5, fill: Paint::solid(Color::rgb8(0x1F, 0x29, 0x37)), font_family: "Noto Sans KR".into(), ..CharStyle::default() };
-        let sample_line_app = Appearance::basic(Paint::None, Paint::solid(Color::BLACK), 0.5);
 
-        for (idx, name) in legend_items.iter().enumerate() {
+        for (idx, item) in legend_items.iter().enumerate() {
             let ry = y + header_h + (idx as f64) * row_h + row_h * 0.5 + 3.0;
 
-            // Sample line (24 pt length)
-            let s_line = shapes::line(Point::new(x + 12.0, ry - 3.0), Point::new(x + 36.0, ry - 3.0));
-            let slid = d.alloc_id();
-            d.insert(Some(gid), usize::MAX, Node::path(slid, s_line, sample_line_app.clone()))?;
+            if item.hatch != Hatch::None {
+                // Render small hatch swatch box (18 x 10 pt)
+                let box_r = Rect::new(x + 12.0, ry - 8.0, x + 30.0, ry + 2.0);
+                let box_pd = shapes::rectangle(box_r);
+                let box_app = Appearance::basic(Paint::solid(Color::WHITE), Paint::solid(Color::BLACK), 0.5);
+                let bid = d.alloc_id();
+                d.insert(Some(gid), usize::MAX, Node::path(bid, box_pd, box_app))?;
+
+                // Draw diagonal hatch lines inside box
+                let d1 = shapes::line(Point::new(x + 14.0, ry + 2.0), Point::new(x + 24.0, ry - 8.0));
+                let d2 = shapes::line(Point::new(x + 20.0, ry + 2.0), Point::new(x + 30.0, ry - 8.0));
+                let d_app = Appearance::basic(Paint::None, Paint::solid(Color::BLACK), 0.2);
+                let d1_id = d.alloc_id();
+                let d2_id = d.alloc_id();
+                d.insert(Some(gid), usize::MAX, Node::path(d1_id, d1, d_app.clone()))?;
+                d.insert(Some(gid), usize::MAX, Node::path(d2_id, d2, d_app))?;
+            } else {
+                // Sample line (24 pt length) with layer's actual weight and dash
+                let s_line = shapes::line(Point::new(x + 12.0, ry - 3.0), Point::new(x + 36.0, ry - 3.0));
+                let eff_w = item.weight.clamp(0.1, 3.0);
+                let mut stroke_app = Appearance::basic(Paint::None, Paint::solid(Color::BLACK), eff_w);
+                if let Some(dash) = &item.dash
+                    && let Some(st) = stroke_app.stroke_mut()
+                {
+                    st.dash = Some(dash.clone());
+                }
+                let slid = d.alloc_id();
+                d.insert(Some(gid), usize::MAX, Node::path(slid, s_line, stroke_app))?;
+            }
 
             // Name text
             let n_pos = Point::new(x + 44.0, ry);
             let ntid = d.alloc_id();
-            d.insert(Some(gid), usize::MAX, Node::new(ntid, NodeKind::Text(Box::new(TextObject::point(n_pos, name, item_style.clone())))))?;
+            d.insert(Some(gid), usize::MAX, Node::new(ntid, NodeKind::Text(Box::new(TextObject::point(n_pos, &item.name, item_style.clone())))))?;
         }
 
         Ok(gid)

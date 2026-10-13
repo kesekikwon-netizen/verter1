@@ -803,4 +803,10 @@ fn pen_and_tablet_preferences_can_be_set_and_read() {
 
     set_pref(&mut s, "penTiltSupport", json!(false));
     assert!(!s.prefs.pen_tilt_support);
+
+    set_pref(&mut s, "trowelDefaultStyle", json!("{\"name\":\"custom\"}"));
+    assert_eq!(s.prefs.trowel_default_style, "{\"name\":\"custom\"}");
+
+    set_pref(&mut s, "trowelCustomWeights", json!("0.15,0.400,0.700"));
+    assert_eq!(s.prefs.trowel_custom_weights, "0.15,0.400,0.700");
 }

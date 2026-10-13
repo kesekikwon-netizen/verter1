@@ -585,6 +585,9 @@ pub struct Prefs {
     pub pen_barrel_button_1: String,
     pub pen_barrel_button_2: String,
     pub pen_tilt_support: bool,
+    // Trowel Styles & Defaults (J018)
+    pub trowel_default_style: String,
+    pub trowel_custom_weights: String,
     // Graphic Styles panel
     /// Override Character Color: a graphic style applied to type replaces its characters' fill
     /// and stroke with the style's fills and strokes.
@@ -798,6 +801,8 @@ impl Default for Prefs {
             pen_barrel_button_1: s("pan"),
             pen_barrel_button_2: s("menu"),
             pen_tilt_support: true,
+            trowel_default_style: s("{}"),
+            trowel_custom_weights: String::new(),
             override_char_color: true,
             pattern_tile_edge_color: {
                 let [r, g, b] = vectorcraft_doc::LAYER_COLORS[0].1;

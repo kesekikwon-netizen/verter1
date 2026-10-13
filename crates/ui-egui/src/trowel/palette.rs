@@ -54,10 +54,48 @@ pub(super) fn show(app: &mut VectorcraftApp, ui: &mut Ui, r: Rect) {
         }
         x = chip_r.right() + 4.0;
     }
+    // Custom stroke weights registered in preferences (J018)
+    let custom_weights_str = app.session.prefs.trowel_custom_weights.clone();
+    let custom_weights: Vec<f64> =
+        custom_weights_str.split(',').filter_map(|s| s.trim().parse::<f64>().ok()).filter(|w| w.is_finite() && *w > 0.0 && *w <= 100.0).collect();
+    for cw in &custom_weights {
+        if WEIGHTS.iter().any(|(_, w, _)| (*w - cw).abs() < 1e-4) {
+            continue;
+        }
+        let label = format!("{cw:.1}");
+        let chip_r = Rect::from_min_size(pos2(x, cy - CHIP_H / 2.0), vec2(30.0, CHIP_H));
+        let resp = ui.interact(chip_r, wid("weight", &label), Sense::click());
+        let on = weight.is_some_and(|v| (v - cw).abs() < 1e-6);
+        chip(ui, chip_r, on, resp.hovered(), &t);
+        let sample = (cw * 2.5).clamp(0.5, 3.5) as f32;
+        ui.painter().rect_filled(Rect::from_center_size(pos2(chip_r.center().x, cy - 5.0), vec2(20.0, sample)), 0.0, t.text);
+        text(ui, pos2(chip_r.center().x, cy + 5.0), Align2::CENTER_CENTER, &label, mono(10.0), t.text);
+        if resp.on_hover_text(format!("{label} pt")).clicked() {
+            set = Some(json!({ "weight": cw }));
+        }
+        x = chip_r.right() + 4.0;
+    }
     let add = Rect::from_min_size(pos2(x, cy - CHIP_H / 2.0), vec2(24.0, CHIP_H));
+    let add_resp = ui.interact(add, wid("weight-add", ()), Sense::click());
     chip_soon(ui, add, &t);
     crate::icons::paint(ui, "plus", Rect::from_center_size(add.center(), vec2(12.0, 12.0)), t.text_disabled);
-    soon_widget(ui, wid("weight-add", ()), add, tw!("Add a Weight"), "J018");
+    if add_resp.clicked() {
+        let w_to_add = match weight {
+            Some(w) if !WEIGHTS.iter().any(|(_, std_w, _)| (std_w - w).abs() < 1e-4) && !custom_weights.iter().any(|cw| (cw - w).abs() < 1e-4) => w,
+            _ => {
+                if !custom_weights.contains(&0.4) {
+                    0.4
+                } else if !custom_weights.contains(&0.6) {
+                    0.6
+                } else {
+                    1.2
+                }
+            }
+        };
+        let _ = app.run("style.addCustomWeight", json!({ "weight": w_to_add }));
+        app.status(crate::i18n::fmt(tw!("Added custom stroke weight {w} pt"), &[("w", &format!("{w_to_add:.1}"))]));
+    }
+    add_resp.on_hover_text(tw!("Add custom stroke weight"));
     // Hatch: active layer's legend hatch or selection.
     let cy = row(1);
     text(ui, pos2(r.left() + 14.0, cy), Align2::LEFT_CENTER, tw!("Hatch"), font(11.0), t.text_dim);

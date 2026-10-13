@@ -3151,3 +3151,42 @@ fn test_j017_pen_tablet_stage2_integration() {
     let status = h.status_line();
     assert!(status.contains("Tablet & Pen") || status.contains("타블렛"), "{status}");
 }
+
+#[test]
+fn test_j018_style_and_legend_table_integration() {
+    let mut h = Harness::new();
+    let pit = legend_row(&mut h, "유구 윤곽선", json!({"weight": 0.8, "strata": "feature_poly"}));
+    h.settle();
+
+    // 1. Palette: click weight-add and verify custom weight is registered and rendered
+    assert!(h.rect(wid("weight", "0.4")).is_none());
+    h.click(wid("weight-add", ()));
+    h.settle();
+    assert_eq!(h.app.session.prefs.trowel_custom_weights, "0.400");
+    assert!(h.rect(wid("weight", "0.4")).is_some(), "custom 0.4 weight chip should appear");
+
+    // 2. Row editor: open row card and save as My Defaults and Template
+    let row_id = wid("legend-row", pit.0);
+    h.double_click(row_id);
+    h.settle();
+    assert!(h.rect(wid("row-card", ())).is_some(), "legend row card should be open");
+
+    // Click My Defaults
+    let defs_btn = wid("card-saved", "defaults");
+    assert!(h.rect(defs_btn).is_some());
+    h.click(defs_btn);
+    h.settle();
+    assert!(h.app.session.prefs.trowel_default_style.contains("유구 윤곽선"));
+
+    // Click Template File
+    let tpl_btn = wid("card-saved", "template");
+    assert!(h.rect(tpl_btn).is_some());
+    h.click(tpl_btn);
+    h.settle();
+    let status = h.status_line();
+    assert!(status.contains("Exported") || status.contains("내보냈습니다"), "{status}");
+
+    // 3. Legend table generation with used_only: true
+    let leg_res = h.app.run("sheet.generateLegendTable", json!({ "used_only": true })).unwrap();
+    assert!(leg_res["rows"].as_u64().unwrap_or(0) >= 1);
+}
