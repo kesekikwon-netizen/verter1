@@ -146,6 +146,9 @@ fn overlays(app: &mut VectorcraftApp, ui: &mut Ui) {
     band(app, ui, canvas, &t);
     zoom_buttons(app, ui, canvas, &t);
     readout(app, ui, canvas, &t);
+    if app.session.prefs.canvas_button_row {
+        canvas_button_row(app, ui, canvas, &t);
+    }
 }
 
 /// A card floating over the canvas: its shadow, `surface` fill and edge.
@@ -284,5 +287,71 @@ fn readout(app: &VectorcraftApp, ui: &Ui, canvas: Rect, t: &Tokens) {
         x = text(ui, pos2(x + 8.0, r.center().y), Align2::LEFT_CENTER, "·", font(12.0), t.text_dim).right();
         x = text(ui, pos2(x + 8.0, r.center().y), Align2::LEFT_CENTER, tw!("Drawing"), font(12.0), t.text_dim).right() + 4.0;
         text(ui, pos2(x, r.center().y), Align2::LEFT_CENTER, scale_str, mono(12.0), t.text);
+    }
+}
+
+/// J016 (A5): Canvas Quick Action Button Row for stylus & tablet users.
+/// Vertically floating on the left side: Undo, Redo, Pan (Hand Tool toggle), and Tablet Settings.
+fn canvas_button_row(app: &mut VectorcraftApp, ui: &Ui, canvas: Rect, t: &Tokens) {
+    const CELL: f32 = 32.0;
+    let buttons = [
+        ("undo", "edit.undo", tw!("Undo"), "undo-2"),
+        ("redo", "edit.redo", tw!("Redo"), "redo-2"),
+        ("hand", "tool.set hand", tw!("Hand Tool (Pan)"), "hand"),
+        ("tablet", "tablet.settings", tw!("Tablet & Pen Settings"), "settings"),
+    ];
+    let total_h = buttons.len() as f32 * CELL;
+    let r = Rect::from_min_size(pos2(canvas.left() + 14.0, (canvas.center().y - total_h / 2.0).max(canvas.top() + 60.0)), vec2(CELL, total_h));
+    card(ui, r, t);
+    shield(ui, wid("canvas-btn-row", ()), r);
+
+    let mut run_cmd = None;
+    let mut open_tablet_settings = false;
+
+    for (i, (key, cmd, label, icon)) in buttons.into_iter().enumerate() {
+        let cell = Rect::from_min_size(pos2(r.left(), r.top() + i as f32 * CELL), vec2(CELL, CELL));
+        let resp = ui.interact(cell, wid("cbtn", key), Sense::click());
+        if resp.hovered() {
+            let radius = match i {
+                0 => CornerRadius { nw: 8, ne: 8, sw: 0, se: 0 },
+                n if n == buttons.len() - 1 => CornerRadius { nw: 0, ne: 0, sw: 8, se: 8 },
+                _ => CornerRadius::ZERO,
+            };
+            ui.painter().rect_filled(cell.shrink(1.0), radius, t.hover);
+        }
+        if i > 0 {
+            ui.painter().hline(cell.x_range().shrink(1.0), cell.top() + 0.5, Stroke::new(1.0, t.border));
+        }
+
+        if key == "hand" && app.session.tool_id() == "hand" {
+            ui.painter().rect_filled(cell.shrink(1.0), CornerRadius::ZERO, t.row_selected);
+        }
+
+        crate::icons::paint(ui, icon, sharp_square(ui, cell, 15.0), t.text);
+
+        if resp.on_hover_text(label).clicked() {
+            if key == "tablet" {
+                open_tablet_settings = true;
+            } else if key == "hand" {
+                if app.session.tool_id() == "hand" {
+                    run_cmd = Some("tool.set pen");
+                } else {
+                    run_cmd = Some("tool.set hand");
+                }
+            } else {
+                run_cmd = Some(cmd);
+            }
+        }
+    }
+
+    if let Some(cmd) = run_cmd {
+        if let Some(tool_name) = cmd.strip_prefix("tool.set ") {
+            app.select_tool(tool_name);
+        } else {
+            crate::menus::invoke(app, cmd, json!({}));
+        }
+    }
+    if open_tablet_settings {
+        super::legend::open_tablet(app, ui.ctx());
     }
 }

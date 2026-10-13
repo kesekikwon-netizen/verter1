@@ -7,7 +7,7 @@ use std::cell::Cell;
 
 use serde_json::json;
 
-use super::legend::{Card, open_card, open_coord, revert};
+use super::legend::{Card, open_card, open_coord, open_tablet, revert};
 use super::*;
 
 /// A Drawing menu item that runs.
@@ -18,6 +18,7 @@ enum Item {
     CutFace,
     Coord,
     LevelLines,
+    Tablet,
 }
 
 pub(super) fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
@@ -78,6 +79,7 @@ pub(super) fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
                 }
                 Err(e) => app.status(e),
             },
+            Some(Item::Tablet) => open_tablet(app, ui.ctx()),
             None => {}
         }
     });
@@ -92,6 +94,7 @@ fn drawing_menu(ui: &mut Ui, open: bool, chosen: &Cell<Option<Item>>) {
         (tw!("Cut Face"), tw!("Apply 0.8 pt outer border and 0.1 pt 1.0 mm hatch lines to closed shapes"), Item::CutFace),
         (tw!("Scale and Coordinate System…"), tw!("Set drawing scale ratio and Korean national TM coordinate system"), Item::Coord),
         (tw!("Make Level Lines"), tw!("Generate 50 cm and 10 cm elevation level lines"), Item::LevelLines),
+        (tw!("Tablet & Pen Settings…"), tw!("Configure stylus sensitivity, pressure curve and tolerances"), Item::Tablet),
     ];
     for (label, tip, item) in live {
         if ui.add_enabled(open, egui::Button::new(label)).on_hover_text(tip).clicked() {

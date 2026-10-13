@@ -138,7 +138,7 @@ impl Tool for PenTool {
         self.drag.is_some() || self.handle.is_some() || self.convert.is_some()
     }
     fn pointer(&mut self, cx: &ToolContext, ev: &PointerEvent) -> Vec<Action> {
-        let tol = cx.tol(5.0).max(cx.point_tol());
+        let tol = cx.tol(cx.pen_close_radius).max(cx.point_tol());
         // The path a press began is the selected one by the next event.
         if self.drawing && self.path.is_none() {
             self.path = active_path(cx).map(|a| a.0);
@@ -227,7 +227,9 @@ impl Tool for PenTool {
                 }
                 if let Some((id, si, ai, a)) = self.handle {
                     let mut h = ev.pos;
-                    if ev.mods.shift {
+                    if h.distance(a) <= cx.pen_tap_tolerance {
+                        h = a;
+                    } else if ev.mods.shift {
                         h = a + vectorcraft_geom::constrain_angle(ev.pos - a, 45.0);
                     }
                     return vec![set_out_handle(id, si, ai, h)];
@@ -244,6 +246,14 @@ impl Tool for PenTool {
                 let mut out_h = ev.pos;
                 if ev.mods.shift {
                     out_h = a + vectorcraft_geom::constrain_angle(ev.pos - a, 45.0);
+                }
+                // J016: Micro-drag within tap tolerance creates a sharp corner anchor without handles.
+                if out_h.distance(a) <= cx.pen_tap_tolerance {
+                    return match path {
+                        None => vec![Action::Preview("path.create".into(), json!({"anchors": [{"x": a.x, "y": a.y}]}))],
+                        Some(id) if closing => vec![Action::Preview("path.close".into(), json!({"id": id.0}))],
+                        Some(id) => vec![Action::Preview("path.appendAnchor".into(), json!({"id": id.0, "x": a.x, "y": a.y}))],
+                    };
                 }
                 let alt = ev.mods.alt;
                 let Some(id) = path else {
@@ -327,7 +337,7 @@ impl Tool for PenTool {
         o
     }
     fn cursor(&self, cx: &ToolContext, p: Point, m: Mods) -> Cursor {
-        let tol = cx.tol(5.0).max(cx.point_tol());
+        let tol = cx.tol(cx.pen_close_radius).max(cx.point_tol());
         if let Some((id, first, last, _)) = self.active(cx) {
             let one = last_anchor(cx, id).is_some_and(|(_, ai)| ai == 0);
             if p.distance(first) <= tol && !one {
@@ -776,5 +786,25 @@ mod tests {
         assert_eq!(t.cursor(&cx_b, Point::new(150.0, 350.0), Mods::default()), Cursor::Pen);
         let acts = click(&mut t, &cx_b, 150.0, 350.0, Mods::default());
         assert!(matches!(&acts[..], [Action::Begin(_), Action::Preview(c, _)] if c == "path.create"), "{acts:?}");
+    }
+
+    #[test]
+    fn micro_drag_within_tap_tolerance_does_not_create_handles() {
+        let (d, _) = doc_with_rect();
+        let s = Selection::default();
+        let p = paint();
+        let cx = cx(&d, &s, &p);
+        let mut t = PenTool::default();
+        // Down at (100.0, 100.0)
+        t.pointer(&cx, &PointerEvent::new(PointerKind::Down, 100.0, 100.0));
+        // Accidental micro-drag of 1.5 pt (tolerance is 3.0 pt)
+        let acts = t.pointer(&cx, &PointerEvent::new(PointerKind::Drag, 101.5, 100.0));
+        assert_eq!(acts, vec![Action::Preview("path.create".into(), json!({"anchors": [{"x": 100.0, "y": 100.0}]}))]);
+        // Dragging beyond 3.0 pt (e.g. 105.0) pulls out handles
+        let acts2 = t.pointer(&cx, &PointerEvent::new(PointerKind::Drag, 105.0, 100.0));
+        assert_eq!(
+            acts2,
+            vec![Action::Preview("path.create".into(), json!({"anchors": [{"x": 100.0, "y": 100.0, "out": [105.0, 100.0], "in": [95.0, 100.0]}]}))]
+        );
     }
 }

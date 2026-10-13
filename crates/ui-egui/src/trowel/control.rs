@@ -105,7 +105,7 @@ fn drawing(app: &mut VectorcraftApp, ui: &mut Ui, room: Rect, t: &Tokens) {
     x = divider(ui, x, cy, t);
     let mut x2 = x;
     label(tw!("Pen Pressure"), t.text_dim, &mut x2);
-    x = segments_soon(ui, pos2(x2, cy), tw!("Pen Pressure"), &[tw!("Same Weight"), tw!("Follow Pressure")], "J016", t) + GAP;
+    x = pressure_segments(app, ui, pos2(x2, cy), t) + GAP;
     x = divider(ui, x, cy, t);
     p.text(pos2(x, cy), Align2::LEFT_CENTER, tw!("Weight, hatch and line type: in the Drawing Palette at the right"), font(12.0), t.text_disabled);
 }
@@ -234,23 +234,42 @@ fn dropdown_soon(ui: &Ui, id: egui::Id, at: Pos2, what: &str, value: &str, job: 
     r.right()
 }
 
-/// A segmented choice a later job brings, `what` it sets, its first segment on. Returns where it
-/// ends.
-fn segments_soon(ui: &Ui, at: Pos2, what: &str, labels: &[&str], job: &str, t: &Tokens) -> f32 {
+/// J016: Interactive segmented choice for Pen Pressure: Same Weight vs Follow Pressure.
+fn pressure_segments(app: &mut VectorcraftApp, ui: &mut Ui, at: Pos2, t: &Tokens) -> f32 {
+    let follow = app.session.prefs.pen_pressure_follow;
+    let labels = [tw!("Same Weight"), tw!("Follow Pressure")];
     let widths: Vec<f32> = labels.iter().map(|l| width_of(ui, l, font(12.0)) + 18.0).collect();
     let r = Rect::from_min_size(pos2(at.x, at.y - H / 2.0), vec2(widths.iter().sum(), H));
-    field_box(ui, r, t.panel_darker, t.input_border);
+    field_box(ui, r, t.input, t.input_border);
     let mut x = r.left();
+    let mut set_follow = None;
     for (i, (label, w)) in labels.iter().zip(&widths).enumerate() {
         let seg = Rect::from_min_size(pos2(x, r.top()), vec2(*w, H));
-        if i == 0 {
-            ui.painter().rect(seg.shrink(1.0), CornerRadius::same(7), t.row_selected, Stroke::new(1.0, t.text_disabled), StrokeKind::Inside);
-        } else {
+        let is_selected = if i == 0 { !follow } else { follow };
+        let resp = ui.interact(seg, wid("ctl-pressure-seg", i), Sense::click());
+        if resp.hovered() && !is_selected {
+            ui.painter().rect_filled(seg.shrink(1.0), CornerRadius::same(7), t.hover);
+        }
+        if is_selected {
+            ui.painter().rect(seg.shrink(1.0), CornerRadius::same(7), t.row_selected, Stroke::new(1.0, t.text), StrokeKind::Inside);
+        } else if i > 0 {
             ui.painter().vline(seg.left() + 0.5, seg.y_range(), Stroke::new(1.0, t.border));
         }
-        text(ui, seg.center(), Align2::CENTER_CENTER, *label, font(12.0), t.text_disabled);
-        soon_widget(ui, wid("ctl-pressure", i), seg, what, job);
+        let txt_color = if is_selected || resp.hovered() { t.text } else { t.text_dim };
+        text(ui, seg.center(), Align2::CENTER_CENTER, label, font(12.0), txt_color);
+        let tip = if i == 0 {
+            tw!("Uniform line weight for archaeological drafting standards")
+        } else {
+            tw!("Variable line weight scaling with stylus pen pressure")
+        };
+        if resp.on_hover_text(tip).clicked() {
+            set_follow = Some(i == 1);
+        }
         x += w;
+    }
+    if let Some(f) = set_follow {
+        app.session.prefs.pen_pressure_follow = f;
+        app.run("prefs.set", json!({ "key": "penPressureFollow", "value": f })).ok();
     }
     r.right()
 }

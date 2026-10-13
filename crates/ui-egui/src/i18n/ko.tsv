@@ -4360,3 +4360,39 @@ trowel	Working	작업
 trowel	Generate 50 cm and 10 cm elevation level lines	50cm(0.5pt) 및 10cm(0.2pt) 해발선 자동 생성
 trowel	Level Lines: {l50} major (50 cm), {l10} minor (10 cm) (EL. {min_e:.1} m ~ {max_e:.1} m)	해발선 생성 완료: 50 cm {l50}개, 10 cm {l10}개 (EL. {min_e:.1} m ~ {max_e:.1} m)
 	Make Level Lines	해발선 만들기
+trowel	Tablet & Pen Settings	타블렛 및 펜 설정
+trowel	Tablet & Pen Settings…	타블렛 및 펜 설정…
+trowel	Tablet & Pen settings saved	타블렛 및 펜 설정이 저장되었습니다
+trowel	Configure stylus sensitivity, pressure curve and tolerances	스타일러스 감도, 필압 곡선 및 닫기 허용치를 설정합니다
+trowel	Device	입력 장치
+trowel	Tolerances	허용치
+trowel	Soft	부드러움
+trowel	Normal (CAD)	보통 (표준 제도)
+trowel	Firm	단단함
+trowel	Palm Rejection (Ignore touch while drawing)	손바닥 거르기 (그리는 동안 터치 무시)
+trowel	Disable Windows Pen Gestures / Flicks	Windows 펜 제스처 및 플릭 끄기
+trowel	Show Canvas Quick Action Buttons	캔버스 퀵 단추 줄 표시
+trowel	Draw with pen to test pressure & curve	펜으로 선을 그어 필압과 곡선을 테스트하세요
+trowel	Clear	지우기
+trowel	Save Settings	설정 저장
+trowel	Hand Tool (Pan)	손 도구 (화면 이동)
+trowel	Soft Curve · 3 pt Tap · 8 px Close	부드러운 곡선 · 3 pt 탭 · 8 px 닫기
+trowel	Firm Curve · 3 pt Tap · 8 px Close	단단한 곡선 · 3 pt 탭 · 8 px 닫기
+trowel	Normal Curve (Archaeological CAD) · 3 pt / 8 px	보통 곡선 (표준 고고학 제도) · 3 pt 탭 / 8 px 닫기
+trowel	Uniform line weight for archaeological drafting standards	고고학 실측 제도 규격에 따른 균일 선 굵기 유지
+trowel	Variable line weight scaling with stylus pen pressure	스타일러스 필압 감도에 따른 가변 선 굵기 적용
+trowel	Pen Test	펜 시험
+	Canvas Quick Button Row	캔버스 퀵 단추 줄
+	Close Path Radius	닫기 허용 반경
+	Disable Windows Pen Gestures	Windows 펜 제스처 끄기
+	Firm	단단함
+	Follow Pen Pressure	필압 따라
+	Normal (Archaeological CAD)	보통 (표준 고고학 제도)
+	Palm Rejection	손바닥 거르기
+	Pressure Sensitivity Curve	필압 감도 곡선
+	Stylus & Drawing	스타일러스 및 드로잉
+	Tap Tolerance	탭 허용치
+	Tolerances	허용치
+	Touch & Buttons	터치 및 단추
+	Windows Ink	Windows Ink
+

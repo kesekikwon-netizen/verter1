@@ -433,11 +433,11 @@ fn drawing_menu_sits_before_view_and_waits_for_its_jobs() {
     let at = |h: &Harness, title: &str| h.texts.iter().find(|p| p.text == title && bar.contains_rect(p.rect)).unwrap().rect.center();
     h.click_at(at(&h, "Drawing"));
     let items = h.popup_buttons();
-    // The first five run (Weights, Revert, Cut Face, Scale and Coordinate System, Make Level Lines); the others wait for their jobs.
-    assert_eq!(items.iter().take(5).filter(|(_, enabled)| *enabled).count(), 5, "the five live items: {items:?}");
-    assert!(items.iter().skip(5).all(|(_, enabled)| !enabled), "they wait for their jobs");
+    // The first six run (Weights, Revert, Cut Face, Scale and Coordinate System, Make Level Lines, Tablet & Pen Settings); the others wait for their jobs.
+    assert_eq!(items.iter().take(6).filter(|(_, enabled)| *enabled).count(), 6, "the six live items: {items:?}");
+    assert!(items.iter().skip(6).all(|(_, enabled)| !enabled), "they wait for their jobs");
     let shown: String = h.texts.iter().map(|p| p.text.as_str()).collect::<Vec<_>>().join("|");
-    for item in ["Weights at Once…", "Make Level Lines", "Scale and Coordinate System…", "Send to Strata…"] {
+    for item in ["Weights at Once…", "Make Level Lines", "Scale and Coordinate System…", "Tablet & Pen Settings…", "Send to Strata…"] {
         assert!(shown.contains(item), "{item} in {shown}");
     }
     // A second click puts the menu away; View, after it, is the app's own View menu.
@@ -1857,7 +1857,7 @@ fn drawing_menu_opens_the_weights_card_and_reverts() {
     };
     let items = open(&mut h);
     let enabled: Vec<bool> = items.iter().map(|(_, e)| *e).collect();
-    assert_eq!(enabled, [true, true, true, true, true, false, false, false, false]);
+    assert_eq!(enabled, [true, true, true, true, true, true, false, false, false, false]);
     h.click_at(h.texts.iter().find(|p| p.text == "Drawing" && bar.contains_rect(p.rect)).unwrap().rect.center());
     h.app.run("select.set", json!({ "ids": [b.0] })).unwrap();
     h.settle();
@@ -2601,4 +2601,85 @@ fn drawing_menu_make_level_lines_runs_and_reports_status() {
 
     let status = h.status_line();
     assert!(status.contains("Level Lines:") || status.contains("해발선"), "{status}");
+}
+
+/// J016: Pressure curve calculations and boundary clamping.
+#[test]
+fn pen_pressure_curve_math_and_clamping() {
+    use crate::canvas::apply_pressure_curve;
+
+    // Normal curve is linear
+    assert_eq!(apply_pressure_curve(0.0, "normal"), 0.0);
+    assert_eq!(apply_pressure_curve(1.0, "normal"), 1.0);
+    assert!((apply_pressure_curve(0.5, "normal") - 0.5).abs() < 1e-6);
+
+    // Soft curve is responsive (higher value for medium pressure)
+    let soft_mid = apply_pressure_curve(0.5, "soft");
+    assert!(soft_mid > 0.5, "soft curve should be more responsive at mid-point: {soft_mid}");
+
+    // Firm curve requires deliberate pressure (lower value for medium pressure)
+    let firm_mid = apply_pressure_curve(0.5, "firm");
+    assert!(firm_mid < 0.5, "firm curve should be firmer at mid-point: {firm_mid}");
+
+    // Out of bounds values clamp properly
+    assert_eq!(apply_pressure_curve(-0.5, "normal"), 0.0);
+    assert_eq!(apply_pressure_curve(1.5, "normal"), 1.0);
+    assert_eq!(apply_pressure_curve(-0.5, "soft"), 0.0);
+    assert_eq!(apply_pressure_curve(1.5, "soft"), 1.0);
+}
+
+/// J016: Control bar Pen Pressure segmented button toggles uniform vs follow pressure.
+#[test]
+fn control_bar_pen_pressure_segmented_button() {
+    let mut h = Harness::new();
+    h.app.run("drawing.newPlan", json!({})).unwrap();
+    h.app.select_tool("pen");
+    h.settle();
+
+    assert!(!h.app.session.prefs.pen_pressure_follow, "default is uniform weight");
+
+    // Click Follow Pressure (segment 1)
+    let seg1_id = wid("ctl-pressure-seg", 1);
+    let r1 = h.rect(seg1_id).expect("ctl-pressure-seg 1 should be laid out");
+    h.click_at(r1.center());
+    h.settle();
+    assert!(h.app.session.prefs.pen_pressure_follow, "should toggle to follow pressure");
+
+    // Click Same Weight (segment 0)
+    let seg0_id = wid("ctl-pressure-seg", 0);
+    let r0 = h.rect(seg0_id).expect("ctl-pressure-seg 0 should be laid out");
+    h.click_at(r0.center());
+    h.settle();
+    assert!(!h.app.session.prefs.pen_pressure_follow, "should toggle back to uniform weight");
+}
+
+/// J016: Canvas button row renders and tablet settings card can be opened.
+#[test]
+fn canvas_button_row_and_tablet_card() {
+    let mut h = Harness::new();
+    h.app.run("drawing.newPlan", json!({})).unwrap();
+    h.settle();
+
+    // Canvas button row is visible
+    let row_id = wid("canvas-btn-row", ());
+    assert!(h.rect(row_id).is_some(), "canvas button row should be present");
+
+    // Click the tablet settings button on the canvas bar
+    let tablet_btn_id = wid("cbtn", "tablet");
+    let btn_r = h.rect(tablet_btn_id).expect("tablet settings button should be present");
+    h.click_at(btn_r.center());
+    h.settle();
+
+    // Tablet card should be open
+    let card_id = wid("tablet-card", ());
+    assert!(h.rect(card_id).is_some(), "tablet settings card should open");
+
+    // Click Save Settings button
+    let apply_id = wid("tablet-apply", ());
+    let apply_r = h.rect(apply_id).expect("save settings button should be present");
+    h.click_at(apply_r.center());
+    h.settle();
+
+    let status = h.status_line();
+    assert!(status.contains("Tablet & Pen") || status.contains("타블렛"), "{status}");
 }

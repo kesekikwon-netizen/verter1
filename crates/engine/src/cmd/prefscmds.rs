@@ -89,6 +89,7 @@ pub const GPU_PREFERENCES: &[(&str, &str)] =
     &[("automatic", "Automatic"), ("lowPower", "Power Saving (integrated)"), ("highPerformance", "High Performance (discrete)")];
 const BLACK: &[(&str, &str)] = &[("accurate", "Display All Blacks Accurately"), ("rich", "Display All Blacks as Rich Black")];
 const BLACK_OUT: &[(&str, &str)] = &[("accurate", "Output All Blacks Accurately"), ("rich", "Output All Blacks as Rich Black")];
+const PEN_CURVES: &[(&str, &str)] = &[("soft", "Soft"), ("normal", "Normal (Archaeological CAD)"), ("firm", "Firm")];
 
 macro_rules! p {
     ($key:literal, $cat:literal, $sec:literal, $label:literal, bool) => {
@@ -332,6 +333,13 @@ pub const PREF_SPECS: &[PrefSpec] = &[
     // Devices
     p!("touchWorkspace", "Devices", "", "Enable Touch Workspace", bool),
     p!("touchGestures", "Devices", "", "Enable Touch Gestures", bool),
+    p!("penPressureFollow", "Devices", "Stylus & Drawing", "Follow Pen Pressure", bool),
+    p!("penPressureCurve", "Devices", "Stylus & Drawing", "Pressure Sensitivity Curve", choice(PEN_CURVES)),
+    p!("penTapTolerance", "Devices", "Tolerances", "Tap Tolerance", num(0.5, 10.0, "pt")),
+    p!("penCloseRadius", "Devices", "Tolerances", "Close Path Radius", num(2.0, 32.0, "px")),
+    p!("penPalmRejection", "Devices", "Stylus & Drawing", "Palm Rejection", bool),
+    p!("penDisableGestures", "Devices", "Windows Ink", "Disable Windows Pen Gestures", bool),
+    p!("canvasButtonRow", "Devices", "Touch & Buttons", "Canvas Quick Button Row", bool),
     // Graphic Styles panel menu
     p!("overrideCharColor", "Type", "Graphic Styles", "Override Character Color", bool),
     // Object → Pattern → Tile Edge Color

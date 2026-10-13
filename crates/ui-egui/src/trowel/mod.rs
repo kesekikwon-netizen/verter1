@@ -26,6 +26,7 @@ mod props;
 mod ribbon;
 mod rowedit;
 mod status;
+pub(crate) mod tablet_card;
 mod tools;
 mod weights;
 

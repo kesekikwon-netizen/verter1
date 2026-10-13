@@ -757,3 +757,34 @@ fn hyphenation_exceptions_preference_reaches_the_hyphenator() {
     set_pref(&mut s, "hyphenationExceptions", json!(""));
     assert!(vectorcraft_text::hyphenation_exceptions().is_empty());
 }
+
+/// J016: Preferences › Devices › Stylus & Drawing (penPressureFollow, penPressureCurve, etc.)
+#[test]
+fn pen_and_tablet_preferences_can_be_set_and_read() {
+    let mut s = Session::new();
+    assert!(!s.prefs.pen_pressure_follow);
+    assert_eq!(s.prefs.pen_pressure_curve, "normal");
+    assert_eq!(s.prefs.pen_tap_tolerance, 3.0);
+    assert_eq!(s.prefs.pen_close_radius, 8.0);
+    assert!(s.prefs.pen_palm_rejection);
+    assert!(s.prefs.pen_disable_gestures);
+    assert!(s.prefs.canvas_button_row);
+
+    set_pref(&mut s, "penPressureFollow", json!(true));
+    assert!(s.prefs.pen_pressure_follow);
+
+    set_pref(&mut s, "penPressureCurve", json!("soft"));
+    assert_eq!(s.prefs.pen_pressure_curve, "soft");
+
+    set_pref(&mut s, "penTapTolerance", json!(2.5));
+    assert_eq!(s.prefs.pen_tap_tolerance, 2.5);
+
+    set_pref(&mut s, "penCloseRadius", json!(12.0));
+    assert_eq!(s.prefs.pen_close_radius, 12.0);
+
+    set_pref(&mut s, "penPalmRejection", json!(false));
+    assert!(!s.prefs.pen_palm_rejection);
+
+    set_pref(&mut s, "canvasButtonRow", json!(false));
+    assert!(!s.prefs.canvas_button_row);
+}

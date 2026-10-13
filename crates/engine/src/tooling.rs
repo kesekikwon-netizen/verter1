@@ -232,6 +232,8 @@ impl Session {
             },
             screen: view.screen,
             plane_widget: self.prefs.perspective_widget.show.then_some(self.prefs.perspective_widget.position),
+            pen_tap_tolerance: self.prefs.pen_tap_tolerance,
+            pen_close_radius: self.prefs.pen_close_radius,
         };
         let tool = &mut self.tool;
         match crate::guard::catch_panic(|| f(tool.as_mut(), &cx)) {

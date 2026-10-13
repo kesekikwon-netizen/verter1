@@ -120,6 +120,23 @@ fn pen_pressure(ui: &Ui, pressed: bool) -> f32 {
     p
 }
 
+/// J016: Apply tablet pressure sensitivity curve based on preferences.
+pub fn apply_pressure_curve(force: f32, curve: &str) -> f32 {
+    let f = force.clamp(0.0, 1.0);
+    match curve {
+        "soft" => f.powf(0.7),
+        "firm" => f.powf(1.4),
+        _ => f,
+    }
+}
+
+/// J016: Get effective pen pressure considering `pen_pressure_follow` preference and curve.
+fn effective_pen_pressure(app: &VectorcraftApp, ui: &Ui, pressed: bool) -> f32 {
+    let raw = pen_pressure(ui, pressed);
+    let curved = apply_pressure_curve(raw, &app.session.prefs.pen_pressure_curve);
+    if app.ui.trowel && !app.session.prefs.pen_pressure_follow { 1.0 } else { curved }
+}
+
 pub fn mods(m: egui::Modifiers, space: bool) -> Mods {
     Mods { shift: m.shift, alt: m.alt, cmd: m.command, ctrl: m.ctrl, space }
 }
@@ -589,7 +606,8 @@ fn handle_input(app: &mut VectorcraftApp, ui: &Ui, resp: &egui::Response, rect: 
             Drag::RotateView { start_angle: (p.y - c.y).atan2(p.x - c.x) as f64, start_rot: v.rotation }
         } else {
             // Cmd with another tool drags with the selection tool used last (the session lends it).
-            let ev = PointerEvent { kind: PointerKind::Down, pos: xf.to_doc(p), mods: mods(m, space), pressure: pen_pressure(ui, true) };
+            let ev =
+                PointerEvent { kind: PointerKind::Down, pos: xf.to_doc(p), mods: mods(m, space), pressure: effective_pen_pressure(app, ui, true) };
             dispatch(app, &ev, view);
             Drag::Tool
         };
@@ -665,8 +683,34 @@ fn handle_input(app: &mut VectorcraftApp, ui: &Ui, resp: &egui::Response, rect: 
                     ui.data_mut(|dd| dd.insert_temp(drag_id(), Drag::Art));
                 }
                 Drag::Tool => {
-                    if pointer.delta() != egui::Vec2::ZERO {
-                        let ev = PointerEvent { kind: PointerKind::Drag, pos: xf.to_doc(p), mods: mods(m, space), pressure: pen_pressure(ui, false) };
+                    // J016 (A2): Gather all sub-frame movement events to ensure high-frequency stylus events are not dropped
+                    let default_pr = pen_pressure(ui, false);
+                    let sub_points: Vec<(Pos2, f32)> = ui.input(|i| {
+                        i.events
+                            .iter()
+                            .filter_map(|e| match e {
+                                egui::Event::PointerMoved(pos) => Some((*pos, default_pr)),
+                                egui::Event::Touch { phase: egui::TouchPhase::Move, pos, force, .. } => {
+                                    Some((*pos, force.unwrap_or(default_pr).clamp(0.0, 1.0)))
+                                }
+                                _ => None,
+                            })
+                            .collect()
+                    });
+                    let is_trowel = app.ui.trowel;
+                    let pen_follow = app.session.prefs.pen_pressure_follow;
+                    let pen_curve = app.session.prefs.pen_pressure_curve.clone();
+                    let calc_pr = move |force: f32| {
+                        if is_trowel && !pen_follow { 1.0 } else { apply_pressure_curve(force, &pen_curve) }
+                    };
+                    if sub_points.len() > 1 {
+                        for (sub_p, sub_force) in sub_points {
+                            let ev =
+                                PointerEvent { kind: PointerKind::Drag, pos: xf.to_doc(sub_p), mods: mods(m, space), pressure: calc_pr(sub_force) };
+                            dispatch(app, &ev, view);
+                        }
+                    } else if pointer.delta() != egui::Vec2::ZERO {
+                        let ev = PointerEvent { kind: PointerKind::Drag, pos: xf.to_doc(p), mods: mods(m, space), pressure: calc_pr(default_pr) };
                         dispatch(app, &ev, view);
                     }
                     // Time held (Twirl, Pucker and Bloat keep applying); a stalled frame counts
@@ -705,7 +749,12 @@ fn handle_input(app: &mut VectorcraftApp, ui: &Ui, resp: &egui::Response, rect: 
                 }
                 Drag::ZoomScrub { .. } => {}
                 Drag::Tool => {
-                    let ev = PointerEvent { kind: PointerKind::Up, pos: xf.to_doc(p), mods: mods(m, space), pressure: pen_pressure(ui, false) };
+                    let ev = PointerEvent {
+                        kind: PointerKind::Up,
+                        pos: xf.to_doc(p),
+                        mods: mods(m, space),
+                        pressure: effective_pen_pressure(app, ui, false),
+                    };
                     dispatch(app, &ev, view);
                 }
                 Drag::Art | Drag::Gesture => {}

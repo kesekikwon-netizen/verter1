@@ -574,6 +574,13 @@ pub struct Prefs {
     // Devices
     pub touch_workspace: bool,
     pub touch_gestures: bool,
+    pub pen_pressure_follow: bool,
+    pub pen_pressure_curve: String,
+    pub pen_tap_tolerance: f64,
+    pub pen_close_radius: f64,
+    pub pen_palm_rejection: bool,
+    pub pen_disable_gestures: bool,
+    pub canvas_button_row: bool,
     // Graphic Styles panel
     /// Override Character Color: a graphic style applied to type replaces its characters' fill
     /// and stroke with the style's fills and strokes.
@@ -776,6 +783,13 @@ impl Default for Prefs {
             black_output: s("accurate"),
             touch_workspace: true,
             touch_gestures: true,
+            pen_pressure_follow: false,
+            pen_pressure_curve: s("normal"),
+            pen_tap_tolerance: 3.0,
+            pen_close_radius: 8.0,
+            pen_palm_rejection: true,
+            pen_disable_gestures: true,
+            canvas_button_row: true,
             override_char_color: true,
             pattern_tile_edge_color: {
                 let [r, g, b] = vectorcraft_doc::LAYER_COLORS[0].1;

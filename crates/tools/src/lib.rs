@@ -338,6 +338,10 @@ pub struct ToolContext<'a> {
     pub screen: Option<ScreenFrame>,
     /// Where the Plane Switching Widget sits (Perspective Grid Options); None while it's hidden.
     pub plane_widget: Option<distort::perspective::widget::WidgetCorner>,
+    /// J016: Pen and stylus tap tolerance in points (default: 3.0 pt).
+    pub pen_tap_tolerance: f64,
+    /// J016: Pen and stylus path close snap radius in screen pixels (default: 8.0 px).
+    pub pen_close_radius: f64,
 }
 
 impl ToolContext<'_> {
@@ -714,6 +718,8 @@ pub(crate) mod testutil {
             construction_angles: guides::construction_angles(guides::DEFAULT_CONSTRUCTION_ANGLES),
             screen: None,
             plane_widget: Some(Default::default()),
+            pen_tap_tolerance: 3.0,
+            pen_close_radius: 8.0,
         }
     }
 }
