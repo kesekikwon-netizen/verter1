@@ -4357,3 +4357,6 @@ trowel	Set drawing scale ratio and Korean national TM coordinate system	도면 �
 trowel	Working	작업
 	Set Scale and Coordinate System	축척 및 좌표계 설정
 	Get Scale and Coordinate System	축척 및 좌표계 조회
+trowel	Generate 50 cm and 10 cm elevation level lines	50cm(0.5pt) 및 10cm(0.2pt) 해발선 자동 생성
+trowel	Level Lines: {l50} major (50 cm), {l10} minor (10 cm) (EL. {min_e:.1} m ~ {max_e:.1} m)	해발선 생성 완료: 50 cm {l50}개, 10 cm {l10}개 (EL. {min_e:.1} m ~ {max_e:.1} m)
+	Make Level Lines	해발선 만들기

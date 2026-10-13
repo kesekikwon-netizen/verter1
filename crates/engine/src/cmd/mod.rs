@@ -36,6 +36,7 @@ pub(crate) mod inline;
 mod layer;
 mod layerpanel;
 pub mod legend;
+pub mod levellines;
 pub mod library;
 pub mod links;
 mod live;
@@ -282,6 +283,7 @@ pub fn command_specs() -> &'static [CommandSpec] {
         v.extend(perspgrid::specs());
         v.extend(legend::specs());
         v.extend(coord::specs());
+        v.extend(levellines::specs());
         v
     })
 }

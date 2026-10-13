@@ -17,6 +17,7 @@ enum Item {
     Revert,
     CutFace,
     Coord,
+    LevelLines,
 }
 
 pub(super) fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
@@ -63,6 +64,20 @@ pub(super) fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
                 Err(e) => app.status(e),
             },
             Some(Item::Coord) => open_coord(app, ui.ctx()),
+            Some(Item::LevelLines) => match app.run("drawing.makeLevelLines", json!({})) {
+                Ok(v) => {
+                    let l50 = v["lines_50cm"].as_u64().unwrap_or(0);
+                    let l10 = v["lines_10cm"].as_u64().unwrap_or(0);
+                    let min_e = v["min_elevation"].as_f64().unwrap_or(0.0);
+                    let max_e = v["max_elevation"].as_f64().unwrap_or(0.0);
+                    let msg = crate::i18n::fmt(
+                        tw!("Level Lines: {l50} major (50 cm), {l10} minor (10 cm) (EL. {min_e:.1} m ~ {max_e:.1} m)"),
+                        &[("l50", &l50.to_string()), ("l10", &l10.to_string()), ("min_e", &format!("{min_e:.1}")), ("max_e", &format!("{max_e:.1}"))],
+                    );
+                    app.status(msg);
+                }
+                Err(e) => app.status(e),
+            },
             None => {}
         }
     });
@@ -76,6 +91,7 @@ fn drawing_menu(ui: &mut Ui, open: bool, chosen: &Cell<Option<Item>>) {
         (tw!("Revert to the Legend"), tw!("The selected lines, or every line set apart when nothing is selected"), Item::Revert),
         (tw!("Cut Face"), tw!("Apply 0.8 pt outer border and 0.1 pt 1.0 mm hatch lines to closed shapes"), Item::CutFace),
         (tw!("Scale and Coordinate System…"), tw!("Set drawing scale ratio and Korean national TM coordinate system"), Item::Coord),
+        (tw!("Make Level Lines"), tw!("Generate 50 cm and 10 cm elevation level lines"), Item::LevelLines),
     ];
     for (label, tip, item) in live {
         if ui.add_enabled(open, egui::Button::new(label)).on_hover_text(tip).clicked() {
@@ -84,7 +100,7 @@ fn drawing_menu(ui: &mut Ui, open: bool, chosen: &Cell<Option<Item>>) {
         }
     }
     let groups: [&[(&str, &str)]; 3] = [
-        &[(tw!("Make Level Lines"), "J015"), (tw!("Align Underlay…"), "J008")],
+        &[(tw!("Align Underlay…"), "J008")],
         &[(tw!("Insert Legend Table"), "J012"), (tw!("Insert Title Block"), "J012")],
         &[(tw!("Send to Strata…"), "J019")],
     ];

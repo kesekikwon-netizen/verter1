@@ -433,9 +433,9 @@ fn drawing_menu_sits_before_view_and_waits_for_its_jobs() {
     let at = |h: &Harness, title: &str| h.texts.iter().find(|p| p.text == title && bar.contains_rect(p.rect)).unwrap().rect.center();
     h.click_at(at(&h, "Drawing"));
     let items = h.popup_buttons();
-    // The first four run (Weights, Revert, Cut Face, Scale and Coordinate System); the others wait for their jobs.
-    assert_eq!(items.iter().take(4).filter(|(_, enabled)| *enabled).count(), 4, "the four live items: {items:?}");
-    assert!(items.iter().skip(4).all(|(_, enabled)| !enabled), "they wait for their jobs");
+    // The first five run (Weights, Revert, Cut Face, Scale and Coordinate System, Make Level Lines); the others wait for their jobs.
+    assert_eq!(items.iter().take(5).filter(|(_, enabled)| *enabled).count(), 5, "the five live items: {items:?}");
+    assert!(items.iter().skip(5).all(|(_, enabled)| !enabled), "they wait for their jobs");
     let shown: String = h.texts.iter().map(|p| p.text.as_str()).collect::<Vec<_>>().join("|");
     for item in ["Weights at Once…", "Make Level Lines", "Scale and Coordinate System…", "Send to Strata…"] {
         assert!(shown.contains(item), "{item} in {shown}");
@@ -1857,7 +1857,7 @@ fn drawing_menu_opens_the_weights_card_and_reverts() {
     };
     let items = open(&mut h);
     let enabled: Vec<bool> = items.iter().map(|(_, e)| *e).collect();
-    assert_eq!(enabled, [true, true, true, true, false, false, false, false, false]);
+    assert_eq!(enabled, [true, true, true, true, true, false, false, false, false]);
     h.click_at(h.texts.iter().find(|p| p.text == "Drawing" && bar.contains_rect(p.rect)).unwrap().rect.center());
     h.app.run("select.set", json!({ "ids": [b.0] })).unwrap();
     h.settle();
@@ -2583,4 +2583,22 @@ fn scale_and_coord_card_and_status_bar_display() {
     let foot = h.panel(SET);
     let set_line = h.line_in(foot);
     assert!(set_line.contains("1:10") && set_line.contains("5186"), "{set_line}");
+}
+
+#[test]
+fn drawing_menu_make_level_lines_runs_and_reports_status() {
+    let mut h = Harness::new();
+    h.app.run("drawing.newSection", json!({})).unwrap();
+    h.settle();
+
+    let bar = h.panel(MENU);
+    let at = h.texts.iter().find(|p| p.text == "Drawing" && bar.contains_rect(p.rect)).unwrap().rect.center();
+    h.click_at(at);
+    let items = h.popup_buttons();
+    // 5th item is "Make Level Lines"
+    h.click_at(items[4].0.center());
+    h.settle();
+
+    let status = h.status_line();
+    assert!(status.contains("Level Lines:") || status.contains("해발선"), "{status}");
 }

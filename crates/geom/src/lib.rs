@@ -12,6 +12,7 @@ pub mod bez;
 pub mod corners;
 pub mod hatch;
 pub mod hit;
+pub mod levels;
 pub mod path;
 pub mod projective;
 pub mod recognize;
@@ -22,6 +23,7 @@ pub use arc::ArcPath;
 pub use hatch::{CUT_FACE_STROKE_WIDTH, HATCH_GAP_PT, HATCH_STROKE_WIDTH, hatch, hatch_deg};
 pub use kurbo;
 pub use kurbo::{Affine, BezPath, CubicBez, Line, ParamCurve, PathEl, PathSeg, Point, Rect, Shape, Size, Vec2};
+pub use levels::subtract_horizontal_obstacles;
 pub use path::{Anchor, AnchorKind, FillRule, PathData, SubPath};
 pub use projective::Homography;
 
