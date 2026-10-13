@@ -4129,5 +4129,14 @@ lighting	Light	Світло
 	Set Section Properties	Задати властивості перерізу
 	Stratum Badge Tool	Інструмент маркера шару
 	Stratum Line Tool	Інструмент лінії шару
+	Add Vessel Wall Cut Cross-Section	Додати переріз стінки посудини
+	Artifact Centerline Tool	Інструмент осьової лінії артефакту
+	Fit Rim Arc Tool	Інструмент апроксимації дуги вінця
+	Fit Rim or Base Arc	Апроксимувати дугу вінця або денця
+	Generate Vessel Dimension Lines	Створити розмірні лінії посудини
+	Mirror Section to Exterior Outline	Віддзеркалити переріз у зовнішній контур
+	Set Artifact Centerline	Встановити осьову лінію артефакту
+	Set Artifact Properties	Задати властивості артефакту
+	Wall Cut Tool	Інструмент перерізу стінки
 
 

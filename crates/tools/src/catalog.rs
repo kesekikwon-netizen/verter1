@@ -143,6 +143,9 @@ pub const TOOL_GROUPS: &[&[ToolInfo]] = &[
         t("stratum-line", "Stratum Line Tool", None, "tool-stratum-line"),
         t("stratum-badge", "Stratum Badge Tool", None, "tool-stratum-badge"),
         t("hearth-cut", "Hearth Cut Tool", None, "tool-hearth-cut"),
+        t("rim-arc", "Fit Rim Arc Tool", None, "tool-rim-arc"),
+        t("centerline", "Artifact Centerline Tool", None, "tool-centerline"),
+        t("wall-cut", "Wall Cut Tool", None, "tool-wall-cut"),
     ],
 ];
 

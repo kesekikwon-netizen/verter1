@@ -7,6 +7,7 @@
 //! by the control channel and MCP, and keeps tools testable without a UI.
 #![forbid(unsafe_code)]
 
+pub mod artifacttools;
 pub mod bbox;
 pub mod builder;
 pub mod catalog;
@@ -598,6 +599,9 @@ pub fn create(id: &str) -> Box<dyn Tool> {
         "stratum-line" => Box::new(stratatools::StratumLineTool::new()),
         "stratum-badge" => Box::new(stratatools::StratumBadgeTool::new()),
         "hearth-cut" => Box::new(stratatools::HearthCutTool::new()),
+        "rim-arc" => Box::new(artifacttools::RimArcTool::new()),
+        "centerline" => Box::new(artifacttools::CenterlineTool::new()),
+        "wall-cut" => Box::new(artifacttools::WallCutTool::new()),
         // Not in the toolbar: `file.place.queue` loads it.
         "place" => Box::new(place::PlaceTool::default()),
         other => symbolism::create(other)

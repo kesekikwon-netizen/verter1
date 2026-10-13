@@ -4158,5 +4158,14 @@ lighting	Light	Lumière
 	Set Section Properties	Définir les propriétés de coupe
 	Stratum Badge Tool	Outil de badge de strate
 	Stratum Line Tool	Outil de ligne de strate
+	Add Vessel Wall Cut Cross-Section	Ajouter la coupe de la paroi du vase
+	Artifact Centerline Tool	Outil ligne d'axe de l'artéfact
+	Fit Rim Arc Tool	Outil d'ajustement d'arc de lèvre
+	Fit Rim or Base Arc	Ajuster l'arc de lèvre ou de fond
+	Generate Vessel Dimension Lines	Générer les lignes de cote du vase
+	Mirror Section to Exterior Outline	Miroiter la coupe vers le profil extérieur
+	Set Artifact Centerline	Définir l'axe de l'artéfact
+	Set Artifact Properties	Définir les propriétés de l'artéfact
+	Wall Cut Tool	Outil de coupe de paroi
 
 

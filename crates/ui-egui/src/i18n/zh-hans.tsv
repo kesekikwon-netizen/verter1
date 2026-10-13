@@ -3777,5 +3777,14 @@ lighting	Light	光源
 	Set Section Properties	设置剖面属性
 	Stratum Badge Tool	地层编号工具
 	Stratum Line Tool	地层线工具
+	Add Vessel Wall Cut Cross-Section	添加器壁截面
+	Artifact Centerline Tool	器物中心线工具
+	Fit Rim Arc Tool	口径圆弧拟合工具
+	Fit Rim or Base Arc	口径或底径圆弧拟合
+	Generate Vessel Dimension Lines	生成器物尺寸线
+	Mirror Section to Exterior Outline	将截面对称镜像为外轮廓线
+	Set Artifact Centerline	设置器物中心线
+	Set Artifact Properties	设置器物属性
+	Wall Cut Tool	器壁截面工具
 
 

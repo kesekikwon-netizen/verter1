@@ -23,6 +23,9 @@ const DRAWING_TOOLS: &[&str] = &[
     "stratum-line",
     "stratum-badge",
     "hearth-cut",
+    "rim-arc",
+    "centerline",
+    "wall-cut",
 ];
 
 const H: f32 = 28.0;
@@ -132,6 +135,30 @@ fn drawing(app: &mut VectorcraftApp, ui: &mut Ui, room: Rect, t: &Tokens) {
         text(ui, btn_rect.center(), Align2::CENTER_CENTER, btn_text, font(12.0), t.text);
         if resp.on_hover_text(tw!("Generate Three-Line Strata Explanation Table")).clicked() {
             app.run("drawing.generateStrataTable", json!({})).ok();
+        }
+        x = btn_rect.right() + GAP;
+        x = divider(ui, x, cy, t);
+    }
+    if tool_id == "rim-arc" || tool_id == "centerline" || tool_id == "wall-cut" {
+        let btn_text = tw!("Dimension Lines");
+        let btn_w = width_of(ui, btn_text, font(12.0)) + 16.0;
+        let btn_rect = Rect::from_min_size(pos2(x, cy - H / 2.0), vec2(btn_w, H));
+        let resp = ui.interact(btn_rect, wid("ctl-artifact-dim", ()), Sense::click());
+        let fill = if resp.hovered() { t.hover } else { t.panel_darker };
+        ui.painter().rect(btn_rect, CornerRadius::same(6), fill, Stroke::new(1.0, t.border), StrokeKind::Inside);
+        text(ui, btn_rect.center(), Align2::CENTER_CENTER, btn_text, font(12.0), t.text);
+        if resp.on_hover_text(tw!("Generate Vessel Dimension Lines (Rim, Base, Height)")).clicked() {
+            app.run(
+                "artifact.generateDimensionLines",
+                json!({
+                    "centerline_x": 300.0,
+                    "rim_y": 100.0,
+                    "base_y": 350.0,
+                    "rim_radius": 141.73228,
+                    "base_radius": 70.86614
+                }),
+            )
+            .ok();
         }
         x = btn_rect.right() + GAP;
         x = divider(ui, x, cy, t);

@@ -4146,5 +4146,14 @@ lighting	Light	Свет
 	Set Section Properties	Задать свойства разреза
 	Stratum Badge Tool	Инструмент маркера слоя
 	Stratum Line Tool	Инструмент линии слоя
+	Add Vessel Wall Cut Cross-Section	Добавить сечение стенки сосуда
+	Artifact Centerline Tool	Инструмент осевой линии артефакта
+	Fit Rim Arc Tool	Инструмент аппроксимации дуги венчика
+	Fit Rim or Base Arc	Аппроксимировать дугу венчика или донца
+	Generate Vessel Dimension Lines	Создать размерные линии сосуда
+	Mirror Section to Exterior Outline	Отразить сечение во внешний контур
+	Set Artifact Centerline	Установить осевую линию артефакта
+	Set Artifact Properties	Задать свойства артефакта
+	Wall Cut Tool	Инструмент сечения стенки
 
 

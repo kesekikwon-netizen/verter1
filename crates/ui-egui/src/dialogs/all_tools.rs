@@ -28,7 +28,8 @@ fn heading(id: &str) -> &'static str {
         _ if id.starts_with("perspective") => "Perspective",
         "artboard" => "Artboards",
         "slice" | "sliceSelection" => "Slices",
-        "section-line" | "spot-height" | "find-number" | "posthole" | "hachure" | "stratum-line" | "stratum-badge" | "hearth-cut" => "Draw",
+        "section-line" | "spot-height" | "find-number" | "posthole" | "hachure" | "stratum-line" | "stratum-badge" | "hearth-cut" | "rim-arc"
+        | "centerline" | "wall-cut" => "Draw",
         _ => "More",
     }
 }

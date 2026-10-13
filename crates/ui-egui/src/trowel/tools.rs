@@ -12,10 +12,10 @@ use super::*;
 const SLOTS: &[(&[&str], &str, bool)] = &[
     (&["selection"], "tw-select", false),
     (&["directSelection", "groupSelection", "lasso", "magicWand"], "tw-direct", true),
-    (&["pen", "curvature", "addAnchor", "deleteAnchor", "anchorPoint"], "tw-pen", false),
+    (&["pen", "curvature", "addAnchor", "deleteAnchor", "anchorPoint", "wall-cut"], "tw-pen", false),
     (&["pencil", "smooth", "pathEraser", "join", "paintbrush", "blobBrush"], "tw-pencil", false),
-    (&["lineSegment", "arc", "spiral", "stratum-line"], "tw-line", false),
-    (&["rectangle", "roundedRectangle", "ellipse", "polygon", "star"], "tw-rect", false),
+    (&["lineSegment", "arc", "spiral", "stratum-line", "centerline"], "tw-line", false),
+    (&["rectangle", "roundedRectangle", "ellipse", "polygon", "star", "rim-arc"], "tw-rect", false),
     (&["type", "areaType", "typeOnPath", "verticalType", "stratum-badge"], "tw-type", true),
     (&["rotate", "reflect"], "tw-rotate", false),
     (&["scale", "shear", "reshape", "freeTransform"], "tw-scale", false),

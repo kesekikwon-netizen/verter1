@@ -108,6 +108,9 @@ pub fn tool_icon(name: &str) -> &'static str {
         "tool-stratum-line" => "tw-line",
         "tool-stratum-badge" => "tw-strata",
         "tool-hearth-cut" => "tw-bucket",
+        "tool-rim-arc" => "tw-ellipse",
+        "tool-centerline" => "tw-line",
+        "tool-wall-cut" => "tw-pen",
         other => {
             if exists(other) {
                 table().get_key_value(other).map(|(k, _)| *k).unwrap_or("square-dashed")

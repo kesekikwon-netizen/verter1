@@ -4446,4 +4446,19 @@ trowel	Hearth Cut	소토면
 	Set Section Properties	단면 속성 설정
 	Stratum Badge Tool	토층 번호 도구
 	Stratum Line Tool	토층선 도구
+trowel	Artifact	유물
+trowel	Dimension Lines	치수선
+trowel	Generate Vessel Dimension Lines (Rim, Base, Height)	유물 4대 치수선 생성 (구경·최대동경·저경·기고)
+trowel	Fit Rim Arc Tool	원호 구경 실측 도구
+trowel	Artifact Centerline Tool	유물 중심선 도구
+trowel	Wall Cut Tool	기벽 단면 도구
+	Add Vessel Wall Cut Cross-Section	기벽 단면 추가
+	Artifact Centerline Tool	유물 중심선 도구
+	Fit Rim Arc Tool	원호 구경 실측 도구
+	Fit Rim or Base Arc	원호 맞춤 구경 실측
+	Generate Vessel Dimension Lines	유물 치수선 생성
+	Mirror Section to Exterior Outline	단면 기준 외형선 대칭 생성
+	Set Artifact Centerline	유물 중심선 설정
+	Set Artifact Properties	유물 속성 설정
+	Wall Cut Tool	기벽 단면 도구
 

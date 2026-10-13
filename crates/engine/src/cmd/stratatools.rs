@@ -76,7 +76,7 @@ pub fn specs() -> Vec<CommandSpec> {
     ]
 }
 
-fn get_or_create_section_layer(
+pub(crate) fn get_or_create_section_layer(
     d: &mut Document,
     name: &str,
     weight: Option<f64>,

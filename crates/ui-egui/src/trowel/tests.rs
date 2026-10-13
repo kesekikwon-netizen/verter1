@@ -2891,3 +2891,103 @@ fn j010_section_and_strata_view_integration() {
     assert!(right_line.contains("10YR 4/3"), "{}", right_line);
     assert!(right_line.contains("Section"), "{}", right_line);
 }
+
+#[test]
+fn test_j011_artifact_drafting_view_integration() {
+    let mut h = Harness::new();
+    h.app.session.execute("file.new", &json!({"width": 800, "height": 600})).unwrap();
+
+    // 1. Tool selection for J011 artifact tools
+    for tool_name in ["rim-arc", "centerline", "wall-cut"] {
+        h.app.select_tool(tool_name);
+        assert_eq!(h.app.session.tool_id(), tool_name);
+    }
+
+    // 2. Control bar shows Dimension Lines quick action button
+    h.settle();
+    let dim_btn = h.rect(wid("ctl-artifact-dim", ()));
+    assert!(dim_btn.is_some(), "ctl-artifact-dim button present in control bar");
+
+    // 3. Set Centerline (℄)
+    let cl_res = h.app.run("artifact.setCenterline", json!({"x": 300.0, "y1": 50.0, "y2": 450.0})).unwrap();
+    assert_eq!(cl_res["x"], 300.0);
+
+    // 4. Fit 3-point rim arc to measure rim diameter
+    let rim_res = h
+        .app
+        .run(
+            "artifact.fitRimArc",
+            json!({
+                "points": [[158.27, 100.0], [300.0, 50.0], [441.73, 100.0]],
+                "kind": "rim"
+            }),
+        )
+        .unwrap();
+    assert!(rim_res["diameter_cm"].as_f64().unwrap() > 0.0);
+
+    // 5. Mirror right section profile across centerline
+    let mirror_res = h
+        .app
+        .run(
+            "artifact.mirrorToExterior",
+            json!({
+                "points": [[350.0, 100.0], [380.0, 200.0], [340.0, 300.0]],
+                "centerline_x": 300.0
+            }),
+        )
+        .unwrap();
+    assert_eq!(mirror_res["points"], 3);
+
+    // 6. Add vessel wall cut profile
+    let wall_res = h
+        .app
+        .run(
+            "artifact.addWallCut",
+            json!({
+                "points": [[350.0, 100.0], [380.0, 200.0], [370.0, 200.0], [345.0, 100.0]]
+            }),
+        )
+        .unwrap();
+    assert_eq!(wall_res["points"], 4);
+
+    // 7. Generate 4 core dimension lines
+    let dim_res = h
+        .app
+        .run(
+            "artifact.generateDimensionLines",
+            json!({
+                "centerline_x": 300.0,
+                "rim_y": 100.0,
+                "base_y": 300.0,
+                "rim_radius": 141.73228,
+                "base_radius": 70.86614
+            }),
+        )
+        .unwrap();
+    assert!(dim_res["rim_cm"].as_f64().unwrap() > 0.0);
+    let dim_id = dim_res["id"].as_u64().unwrap();
+
+    // 8. Set artifact properties and verify Properties panel readout
+    h.app
+        .run(
+            "artifact.setProps",
+            json!({
+                "kind": "토기",
+                "period": "신석기",
+                "rim_cm": 10.0,
+                "base_cm": 5.0,
+                "height_cm": 7.1
+            }),
+        )
+        .unwrap();
+
+    h.app.run("select.set", json!({"ids": [dim_id]})).unwrap();
+    h.settle();
+
+    let right = h.panel(RIGHT);
+    let right_line = h.line_in(right);
+    assert!(right_line.contains("Artifact"), "{}", right_line);
+    assert!(right_line.contains("구경"), "{}", right_line);
+    assert!(right_line.contains("저경"), "{}", right_line);
+    assert!(right_line.contains("기고"), "{}", right_line);
+}

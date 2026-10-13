@@ -4103,5 +4103,14 @@ theme	Appearance	Erscheinungsbild
 	Set Section Properties	Profileigenschaften festlegen
 	Stratum Badge Tool	Schichtnummern-Werkzeug
 	Stratum Line Tool	Schichtlinien-Werkzeug
+	Add Vessel Wall Cut Cross-Section	Gefäßwandschnitt hinzufügen
+	Artifact Centerline Tool	Artefakt-Mittellinien-Werkzeug
+	Fit Rim Arc Tool	Randbogen-Anpassungswerkzeug
+	Fit Rim or Base Arc	Rand- oder Bodenbogen anpassen
+	Generate Vessel Dimension Lines	Gefäßmaßlinien erzeugen
+	Mirror Section to Exterior Outline	Schnittlinie zur Außenkontur spiegeln
+	Set Artifact Centerline	Artefakt-Mittellinie festlegen
+	Set Artifact Properties	Artefakt-Eigenschaften festlegen
+	Wall Cut Tool	Wandschnitt-Werkzeug
 
 

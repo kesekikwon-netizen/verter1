@@ -1,5 +1,7 @@
 # J010: 단면·토층 화면 (Section & Soil Stratum View)
 
+상태: done (2026-10-14) · 기준 커밋 `8de26a8d` · 검증: `cargo xtask ci` 7개 전체 품질 게이트 통과 (fmt, clippy, test, assets, brands, layers, wasm) · **고고학 발굴 현장 단면·토층 전용 3대 도구 및 삼선표 해설표 시스템 완벽 구현**
+
 ## 1. 개요 및 배경
 한국 매장유산 발굴조사에서 유구(주거지, 수혈, 분묘, 성벽 등)의 **단면(Section)과 토층(Stratigraphy)** 실측도는 층위학적 퇴적 과정과 시기 구분의 절대적 근거가 되는 핵심 도면이다.
 본 작업(J010)은 Strata(hgis) 연계 조용한 도판(Quiet Plate) 기준에 맞춰, 현업 발굴조사원이 단면 실측과 토층 주기를 신속하고 정확하게 완성할 수 있는 전용 제도 시스템을 구축한다.

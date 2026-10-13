@@ -4150,5 +4150,14 @@ lighting	Light	Luce
 	Set Section Properties	Imposta proprietà di sezione
 	Stratum Badge Tool	Strumento contrassegno strato
 	Stratum Line Tool	Strumento linea strato
+	Add Vessel Wall Cut Cross-Section	Aggiungi sezione della parete del vaso
+	Artifact Centerline Tool	Strumento asse mediano del reperto
+	Fit Rim Arc Tool	Strumento adattamento arco orlo
+	Fit Rim or Base Arc	Adatta arco dell'orlo o del fondo
+	Generate Vessel Dimension Lines	Genera linee di quota del vaso
+	Mirror Section to Exterior Outline	Rifletti la sezione nel profilo esterno
+	Set Artifact Centerline	Imposta l'asse del reperto
+	Set Artifact Properties	Imposta le proprietà del reperto
+	Wall Cut Tool	Strumento taglio parete
 
 

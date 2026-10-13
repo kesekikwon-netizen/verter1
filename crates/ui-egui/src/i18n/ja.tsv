@@ -4143,4 +4143,13 @@ lighting	Light	ライト
 	Set Section Properties	断面プロパティを設定
 	Stratum Badge Tool	土層番号ツール
 	Stratum Line Tool	土層線ツール
+	Add Vessel Wall Cut Cross-Section	器壁断面を追加
+	Artifact Centerline Tool	遺物中心線ツール
+	Fit Rim Arc Tool	口径円弧測定ツール
+	Fit Rim or Base Arc	口径・底径円弧フィッティング
+	Generate Vessel Dimension Lines	遺物寸法線を生成
+	Mirror Section to Exterior Outline	断面を外形線に対称生成
+	Set Artifact Centerline	遺物中心線を設定
+	Set Artifact Properties	遺物プロパティを設定
+	Wall Cut Tool	器壁断面ツール
 
