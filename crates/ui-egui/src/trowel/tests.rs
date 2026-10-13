@@ -433,9 +433,9 @@ fn drawing_menu_sits_before_view_and_waits_for_its_jobs() {
     let at = |h: &Harness, title: &str| h.texts.iter().find(|p| p.text == title && bar.contains_rect(p.rect)).unwrap().rect.center();
     h.click_at(at(&h, "Drawing"));
     let items = h.popup_buttons();
-    assert_eq!(items.len(), 9, "the Drawing menu's items: {items:?}");
-    // The first three run (Weights, Revert, Cut Face); the others wait for their jobs.
-    assert!(items.iter().skip(3).all(|(_, enabled)| !enabled), "they wait for their jobs");
+    // The first four run (Weights, Revert, Cut Face, Scale and Coordinate System); the others wait for their jobs.
+    assert_eq!(items.iter().take(4).filter(|(_, enabled)| *enabled).count(), 4, "the four live items: {items:?}");
+    assert!(items.iter().skip(4).all(|(_, enabled)| !enabled), "they wait for their jobs");
     let shown: String = h.texts.iter().map(|p| p.text.as_str()).collect::<Vec<_>>().join("|");
     for item in ["Weights at Once…", "Make Level Lines", "Scale and Coordinate System…", "Send to Strata…"] {
         assert!(shown.contains(item), "{item} in {shown}");
@@ -1857,7 +1857,7 @@ fn drawing_menu_opens_the_weights_card_and_reverts() {
     };
     let items = open(&mut h);
     let enabled: Vec<bool> = items.iter().map(|(_, e)| *e).collect();
-    assert_eq!(enabled, [true, true, true, false, false, false, false, false, false]);
+    assert_eq!(enabled, [true, true, true, true, false, false, false, false, false]);
     h.click_at(h.texts.iter().find(|p| p.text == "Drawing" && bar.contains_rect(p.rect)).unwrap().rect.center());
     h.app.run("select.set", json!({ "ids": [b.0] })).unwrap();
     h.settle();
@@ -2549,4 +2549,38 @@ fn ribbon_new_drawing_tiles_are_active() {
     let doc2 = &h.app.session.active().unwrap().doc;
     assert_eq!(doc2.layers.len(), 7);
     assert!(doc2.layers.iter().any(|l| l.display_name() == "외형선"));
+}
+
+#[test]
+fn scale_and_coord_card_and_status_bar_display() {
+    let mut h = Harness::new();
+    let bar = h.panel(STATUS);
+    assert!(h.line_in(bar).contains("Scale and coordinate system not set"));
+
+    // Click status-scale opens the card
+    h.click(wid("status-scale", ()));
+    assert!(h.rect(wid("coord-card", ())).is_some(), "the coord card opens");
+
+    // Click 1:10 scale segment
+    h.click(wid("coord-scale", "10"));
+
+    // Apply
+    h.click(wid("coord-apply", ()));
+    assert!(h.rect(wid("coord-card", ())).is_none(), "the card is closed");
+
+    // Status bar shows 1:10 and 5186
+    let line = h.line_in(h.panel(STATUS));
+    assert!(line.contains("1:10") && line.contains("5186"), "{line}");
+
+    // Hover over canvas shows formatted TM coordinates in status bar
+    let at = h.app.canvas_rect.unwrap().center();
+    h.frame(vec![Event::PointerMoved(at)]);
+    h.settle();
+    let line = h.line_in(h.panel(STATUS));
+    assert!(line.contains('X') && line.contains('Y'), "{line}");
+
+    // Drawings set foot also shows Scale 1:10 and 5186
+    let foot = h.panel(SET);
+    let set_line = h.line_in(foot);
+    assert!(set_line.contains("1:10") && set_line.contains("5186"), "{set_line}");
 }

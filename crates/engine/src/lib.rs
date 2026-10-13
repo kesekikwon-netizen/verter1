@@ -1472,6 +1472,8 @@ mod tests_colorthemes;
 #[cfg(test)]
 mod tests_containers;
 #[cfg(test)]
+mod tests_coord;
+#[cfg(test)]
 mod tests_css;
 #[cfg(test)]
 mod tests_cut;

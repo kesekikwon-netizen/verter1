@@ -7,7 +7,7 @@ use std::cell::Cell;
 
 use serde_json::json;
 
-use super::legend::{Card, open_card, revert};
+use super::legend::{Card, open_card, open_coord, revert};
 use super::*;
 
 /// A Drawing menu item that runs.
@@ -16,6 +16,7 @@ enum Item {
     Weights,
     Revert,
     CutFace,
+    Coord,
 }
 
 pub(super) fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
@@ -61,18 +62,20 @@ pub(super) fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
                 }
                 Err(e) => app.status(e),
             },
+            Some(Item::Coord) => open_coord(app, ui.ctx()),
             None => {}
         }
     });
 }
 
-/// The Drawing menu's items, in groups: the two that run (with a drawing open), then the others,
+/// The Drawing menu's items, in groups: the items that run (with a drawing open), then the others,
 /// each with the job that brings it.
 fn drawing_menu(ui: &mut Ui, open: bool, chosen: &Cell<Option<Item>>) {
     let live = [
         (tw!("Change Weights at Once…"), tw!("Change every line's weight at once"), Item::Weights),
         (tw!("Revert to the Legend"), tw!("The selected lines, or every line set apart when nothing is selected"), Item::Revert),
         (tw!("Cut Face"), tw!("Apply 0.8 pt outer border and 0.1 pt 1.0 mm hatch lines to closed shapes"), Item::CutFace),
+        (tw!("Scale and Coordinate System…"), tw!("Set drawing scale ratio and Korean national TM coordinate system"), Item::Coord),
     ];
     for (label, tip, item) in live {
         if ui.add_enabled(open, egui::Button::new(label)).on_hover_text(tip).clicked() {
@@ -80,9 +83,8 @@ fn drawing_menu(ui: &mut Ui, open: bool, chosen: &Cell<Option<Item>>) {
             ui.close();
         }
     }
-    let groups: [&[(&str, &str)]; 4] = [
-        &[(tw!("Make Level Lines"), "J015")],
-        &[(tw!("Scale and Coordinate System…"), "J006"), (tw!("Align Underlay…"), "J008")],
+    let groups: [&[(&str, &str)]; 3] = [
+        &[(tw!("Make Level Lines"), "J015"), (tw!("Align Underlay…"), "J008")],
         &[(tw!("Insert Legend Table"), "J012"), (tw!("Insert Title Block"), "J012")],
         &[(tw!("Send to Strata…"), "J019")],
     ];

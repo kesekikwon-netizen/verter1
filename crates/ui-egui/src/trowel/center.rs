@@ -264,14 +264,25 @@ fn percent(zoom: f64) -> String {
     if p < 9.95 { format!("{p:.1} %") } else { format!("{p:.0} %") }
 }
 
-/// The screen readout at the bottom right: the zoom as a percentage.
+/// The screen readout at the bottom right: the zoom as a percentage and drawing scale.
 fn readout(app: &VectorcraftApp, ui: &Ui, canvas: Rect, t: &Tokens) {
     let zoom = percent(app.view().map_or(1.0, |v| v.zoom));
     let label = tw!("Screen");
-    let w = 10.0 + width_of(ui, label, font(12.0)) + 4.0 + width_of(ui, &zoom, mono(12.0)) + 10.0;
+    let scale_opt = app.session.active().and_then(|st| st.doc.coord.as_ref()).map(|c| c.scale_label());
+
+    let mut w = 10.0 + width_of(ui, label, font(12.0)) + 4.0 + width_of(ui, &zoom, mono(12.0)) + 10.0;
+    if let Some(scale_str) = &scale_opt {
+        w += 8.0 + width_of(ui, "·", font(12.0)) + 8.0 + width_of(ui, tw!("Drawing"), font(12.0)) + 4.0 + width_of(ui, scale_str, mono(12.0));
+    }
+
     let r = Rect::from_min_max(pos2(canvas.right() - 16.0 - w, canvas.bottom() - 16.0 - 30.0), pos2(canvas.right() - 16.0, canvas.bottom() - 16.0));
     card(ui, r, t);
     shield(ui, wid("readout", ()), r);
-    let x = text(ui, pos2(r.left() + 10.0, r.center().y), Align2::LEFT_CENTER, label, font(12.0), t.text_dim).right() + 4.0;
-    text(ui, pos2(x, r.center().y), Align2::LEFT_CENTER, zoom, mono(12.0), t.text);
+    let mut x = text(ui, pos2(r.left() + 10.0, r.center().y), Align2::LEFT_CENTER, label, font(12.0), t.text_dim).right() + 4.0;
+    x = text(ui, pos2(x, r.center().y), Align2::LEFT_CENTER, zoom, mono(12.0), t.text).right();
+    if let Some(scale_str) = scale_opt {
+        x = text(ui, pos2(x + 8.0, r.center().y), Align2::LEFT_CENTER, "·", font(12.0), t.text_dim).right();
+        x = text(ui, pos2(x + 8.0, r.center().y), Align2::LEFT_CENTER, tw!("Drawing"), font(12.0), t.text_dim).right() + 4.0;
+        text(ui, pos2(x, r.center().y), Align2::LEFT_CENTER, scale_str, mono(12.0), t.text);
+    }
 }

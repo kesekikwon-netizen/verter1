@@ -16,6 +16,7 @@ mod caption;
 mod card;
 mod center;
 mod control;
+pub(crate) mod coord_card;
 mod drawings;
 pub(crate) mod home;
 mod legend;

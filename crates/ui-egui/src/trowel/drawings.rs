@@ -76,11 +76,21 @@ fn footer(app: &mut VectorcraftApp, ui: &Ui, r: Rect, t: &Tokens) -> Rect {
     }
     y += line;
     let soon_top = y - line / 2.0;
-    for l in [tw!("Scale not set"), tw!("Coordinate system not set")] {
-        text(ui, pos2(foot.left() + 12.0, y), Align2::LEFT_CENTER, l, font(11.0), t.text_dim);
-        y += line;
-    }
+    let coord_opt = app.session.active().and_then(|st| st.doc.coord.as_ref());
+    let (l1, l2) = match coord_opt {
+        Some(c) => (format!("{} {}", tw!("Scale"), c.scale_label()), format!("{} {}", tw!("Working"), c.crs_label())),
+        None => (tw!("Scale not set").to_string(), tw!("Coordinate system not set").to_string()),
+    };
+    let color = if coord_opt.is_some() { t.text } else { t.text_dim };
+    text(ui, pos2(foot.left() + 12.0, y), Align2::LEFT_CENTER, &l1, font(11.0), color);
+    y += line;
+    text(ui, pos2(foot.left() + 12.0, y), Align2::LEFT_CENTER, &l2, font(11.0), color);
+    y += line;
+
     let lines = Rect::from_min_max(pos2(foot.left(), soon_top), pos2(foot.right() - 1.0, y - line / 2.0));
-    soon_widget(ui, wid("set-foot", ()), lines, tw!("Scale and coordinate system"), "J006");
+    let resp = ui.interact(lines, wid("set-foot", ()), Sense::click());
+    if resp.on_hover_text(tw!("Scale and coordinate system")).clicked() {
+        super::legend::open_coord(app, ui.ctx());
+    }
     foot
 }

@@ -9,6 +9,7 @@ pub mod clipboard;
 mod colorcmds;
 pub mod colormgmt;
 pub mod colortheme;
+pub mod coord;
 mod create;
 mod css;
 mod cut;
@@ -280,6 +281,7 @@ pub fn command_specs() -> &'static [CommandSpec] {
         v.extend(halftone::specs());
         v.extend(perspgrid::specs());
         v.extend(legend::specs());
+        v.extend(coord::specs());
         v
     })
 }

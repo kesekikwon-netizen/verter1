@@ -5,13 +5,15 @@
 //! at Once, the legend groups and Add to Legend work on the rows too.
 
 use std::collections::HashSet;
+use std::sync::Arc;
 
 use serde::Serialize;
 use serde_json::{Value, json};
 use vectorcraft_color::Paint;
 use vectorcraft_doc::legend::{MAX_DASHES, MAX_KEY, MAX_MARK, MAX_WEIGHT, clip};
 use vectorcraft_doc::{
-    Appearance, AppearanceItem, Dash, Document, Hatch, Legend, LegendGroup, LegendSample, LineType, Node, NodeId, NodeKind, StrokeLayer, legend,
+    Appearance, AppearanceItem, Dash, DocCoord, Document, Hatch, Legend, LegendGroup, LegendSample, LineType, Node, NodeId, NodeKind, StrokeLayer,
+    legend,
 };
 use vectorcraft_geom::{BezPath, CUT_FACE_STROKE_WIDTH, FillRule, HATCH_GAP_PT, HATCH_STROKE_WIDTH, PathData, PathEl, Shape, hatch_deg};
 
@@ -785,6 +787,15 @@ fn new_template(s: &mut Session, p: &Value) -> Result<Value> {
 
     if let Ok(st) = s.doc_mut() {
         st.active_layer = st.doc.layers.last().map(|l| l.id).or(st.active_layer);
+        let coord = match kind.as_str() {
+            "plan" => DocCoord::new(20.0, 5186, 148_000.0, 98_150.0),
+            "section" => DocCoord::new(20.0, 5186, 148_000.0, 98_150.0),
+            "finds" => DocCoord::new(1.0, 5186, 0.0, 0.0),
+            "sheet" => DocCoord::new(100.0, 5186, 148_000.0, 98_150.0),
+            _ => DocCoord::default(),
+        };
+        Arc::make_mut(&mut st.doc).coord = Some(coord);
+        st.saved_doc = st.doc.clone();
     }
 
     Ok(json!({ "kind": kind, "title": title }))

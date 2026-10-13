@@ -10,11 +10,28 @@ pub(super) fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
     egui::Panel::bottom(STATUS).exact_size(STATUS_H).show_separator_line(false).frame(egui::Frame::NONE.fill(t.panel)).show(ui, |ui| {
         let r = ui.max_rect();
         line_above(ui, r, t.border);
-        // The cells, right to left.
-        let scale = cell(ui, r, r.right(), false, &[(tw!("Scale and coordinate system not set").into(), font(12.0), t.text_dim)], &t);
-        soon_widget(ui, wid("status-scale", ()), scale, tw!("Scale and coordinate system"), "J006");
-        let u = app.session.general_unit();
-        let (x, y) = app.hover_doc.map_or(("–".to_string(), "–".to_string()), |p| (u.readout(p.x), u.readout(p.y)));
+        let coord_opt = app.session.active().and_then(|st| st.doc.coord.as_ref());
+        let (scale_label, scale_color) = match coord_opt {
+            Some(c) => (c.summary_label(), t.text),
+            None => (tw!("Scale and coordinate system not set").to_string(), t.text_dim),
+        };
+        let scale = cell(ui, r, r.right(), false, &[(scale_label, font(12.0), scale_color)], &t);
+        let resp = ui.interact(scale, wid("status-scale", ()), Sense::click());
+        if resp.on_hover_text(tw!("Scale and coordinate system")).clicked() {
+            super::legend::open_coord(app, ui.ctx());
+        }
+
+        let (x, y) = match (coord_opt, app.hover_doc) {
+            (Some(c), Some(p)) => {
+                let (tm_x, tm_y) = c.pt_to_tm(p.x, p.y);
+                (vectorcraft_doc::format_tm_coord(tm_x), vectorcraft_doc::format_tm_coord(tm_y))
+            }
+            (None, Some(p)) => {
+                let u = app.session.general_unit();
+                (u.readout(p.x), u.readout(p.y))
+            }
+            (_, None) => ("–".to_string(), "–".to_string()),
+        };
         let at = cell(
             ui,
             r,

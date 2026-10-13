@@ -4346,4 +4346,14 @@ trowel	Unsaved	저장 안 됨
 	New Section Drawing	새 단면도
 	New Finds Drawing	새 유물 실측도
 	New Plate Sheet	새 보고서 종합도판
-
+trowel	CRS Ruler	좌표계 눈금자
+trowel	EPSG:5186 Central (Rec.)	EPSG:5186 중부원점 (추천)
+trowel	EPSG:5187 Eastern	EPSG:5187 동부원점
+trowel	Origin	원점 선택
+trowel	Origin (m)	기준 좌표 (m)
+trowel	Paper Stroke	종이 굵기 환산
+trowel	Scale & TM Coordinate System	축척 및 국가 TM 좌표계 설정
+trowel	Set drawing scale ratio and Korean national TM coordinate system	도면 실측 축척 및 한국 국가 TM 좌표계 설정
+trowel	Working	작업
+	Set Scale and Coordinate System	축척 및 좌표계 설정
+	Get Scale and Coordinate System	축척 및 좌표계 조회

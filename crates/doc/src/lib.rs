@@ -10,6 +10,7 @@ pub mod assets;
 pub mod blend;
 pub mod clipnest;
 pub mod cmyk;
+pub mod coord;
 pub mod corners;
 pub mod graph;
 pub mod hit;
@@ -66,6 +67,7 @@ pub use appearance::{
     StrokeAlign, StrokeLayer, WidthProfile,
 };
 pub use assets::ExportAsset;
+pub use coord::{DocCoord, format_tm_coord};
 pub use corners::LiveCorners;
 pub use graph::{GraphKind, GraphSpec, MAX_GRAPH_CATEGORIES, MAX_GRAPH_SERIES, SeriesPaint, TickLength, ValueAxisSide};
 pub use hit::{Hit, HitKind};
@@ -655,6 +657,9 @@ pub struct Document {
     /// state, never saved.
     #[serde(skip)]
     pub puppet: Option<Arc<PuppetPins>>,
+    /// Archaeological CAD coordinate system and scale (Trowel, J006).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub coord: Option<DocCoord>,
 }
 
 fn ppi72() -> f64 {
@@ -726,6 +731,7 @@ impl Document {
             print_setup: None,
             assets: vec![],
             puppet: None,
+            coord: None,
         };
         let id = d.alloc_id();
         d.layers.push(Arc::new(Node::layer(id, "Layer 1", LayerColor::Preset(0))));

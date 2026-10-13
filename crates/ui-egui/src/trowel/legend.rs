@@ -111,6 +111,7 @@ enum Act {
 pub(super) enum Card {
     Row(NodeId),
     Weights,
+    Coord,
 }
 
 /// The card that is open, for which drawing (it closes when another one comes to the front), how
@@ -136,9 +137,16 @@ pub(super) fn open_card(app: &VectorcraftApp, ctx: &egui::Context, card: Card, t
         if card == Card::Weights {
             super::weights::forget(ctx);
         }
+        if card == Card::Coord {
+            super::coord_card::forget(ctx);
+        }
         let since = ctx.cumulative_pass_nr();
         ctx.data_mut(|d| d.insert_temp(card_id(), Open { card, doc: st.uid, top, since }));
     }
+}
+
+pub(super) fn open_coord(app: &VectorcraftApp, ctx: &egui::Context) {
+    open_card(app, ctx, Card::Coord, None);
 }
 
 /// Show the open card beside the column whose visible part `ui` clips to; `r` is the legend's.
@@ -151,7 +159,7 @@ fn show_card(app: &mut VectorcraftApp, ui: &Ui, r: Rect) {
     let bounds = Rect::from_min_max(pos2(ctx.content_rect().left(), top), pos2(column.left(), column.bottom()));
     let top = match open.card {
         Card::Row(id) => open.top.or_else(|| ctx.read_response(wid("legend-row", id.0)).map(|row| row.rect.top())),
-        Card::Weights => open.top,
+        Card::Weights | Card::Coord => open.top,
     };
     let at = pos2(column.left() - 8.0 - super::card::W, top.unwrap_or(r.top()));
     // A press in the pass it opened in opened it, or came before it: it doesn't put it away.
@@ -161,6 +169,7 @@ fn show_card(app: &mut VectorcraftApp, ui: &Ui, r: Rect) {
         && match open.card {
             Card::Row(id) => super::rowedit::show(app, ctx, place, id),
             Card::Weights => super::weights::show(app, ctx, place),
+            Card::Coord => super::coord_card::show(app, ctx, place),
         };
     if !keep {
         ctx.data_mut(|d| d.remove::<Open>(card_id()));
