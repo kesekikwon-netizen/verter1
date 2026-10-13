@@ -52,13 +52,25 @@ pub struct ImportOptions {
     /// The art's centre on the artboard's (else the drawing's origin, or fitted art's
     /// bottom-left corner, on the artboard's bottom-left corner).
     pub center: bool,
+    /// Preserve real-world survey/section coordinates and register into DocCoord (Trowel, J007).
+    pub preserve_coord: bool,
     /// All art on one layer.
     pub merge_layers: bool,
 }
 
 impl Default for ImportOptions {
     fn default() -> Self {
-        Self { layout: None, fit: false, fit_to: FIT_TO, unit: None, scale: None, scale_lineweights: false, center: true, merge_layers: false }
+        Self {
+            layout: None,
+            fit: false,
+            fit_to: FIT_TO,
+            unit: None,
+            scale: None,
+            scale_lineweights: false,
+            center: true,
+            preserve_coord: false,
+            merge_layers: false,
+        }
     }
 }
 
@@ -208,7 +220,9 @@ pub fn import(bytes: &[u8], o: &ImportOptions) -> Result<Imported, String> {
     let (unit, scale) = default_ratio(&d.header);
     let natural = unit.points() / scale;
     let ratio = match (o.unit, o.scale) {
+        (None, None) if o.preserve_coord => Unit::Meters.points(),
         (None, None) => natural,
+        (None, Some(s)) if o.preserve_coord => Unit::Meters.points() / s,
         (u, s) => u.unwrap_or(unit).points() / s.unwrap_or(1.0),
     };
     let (mut document, mut warnings) = build::Build::new(&d, o).run(layout, natural, ratio)?;

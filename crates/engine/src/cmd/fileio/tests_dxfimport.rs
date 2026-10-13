@@ -241,3 +241,20 @@ fn a_drawing_export_writes_opens_again() {
     let union = all.iter().copied().reduce(|a, b| a.union(b)).unwrap();
     assert!((union.width() - 350.0).abs() < 2.0 && (union.y1 - h + 200.0).abs() < 2.0, "{union:?} on {h}");
 }
+
+#[test]
+fn open_with_preserve_coord_and_desca_section() {
+    let mut s = page();
+    let dxf = "  0\nSECTION\n  2\nENTITIES\n\
+  0\nLINE\n  8\nSECTION_PROFILE\n 10\n148000.0\n 20\n98150.0\n 11\n148020.0\n 21\n98160.0\n\
+  0\nTEXT\n  8\nLEVEL_TEXT\n 10\n148000.0\n 20\n98150.0\n 40\n2.5\n  1\n152.5\n\
+  0\nENDSEC\n  0\nEOF\n";
+    let r = open(&mut s, dxf.as_bytes(), json!({"dxf": {"preserveCoord": true, "scale": 20}})).unwrap();
+    assert_eq!(r["format"], "dxf");
+    let st = s.doc().unwrap();
+    let coord = st.doc.coord.as_ref().expect("DocCoord must be set");
+    assert_eq!(coord.scale_label(), "1:20");
+    assert_eq!(coord.epsg, 5186);
+    assert!(st.doc.layers.iter().any(|l| l.display_name() == "단면선 (잘린 땅)"));
+    assert!(st.doc.layers.iter().any(|l| l.display_name() == "해발 숫자"));
+}

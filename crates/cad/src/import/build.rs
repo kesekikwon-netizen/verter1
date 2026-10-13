@@ -9,7 +9,11 @@ use std::sync::Arc;
 
 use kurbo::BezPath;
 use vectorcraft_color::{Color, Paint};
-use vectorcraft_doc::{Appearance, AppearanceItem, CharStyle, Dash, Document, LAYER_COLORS, LayerColor, LineCap, Node, NodeKind, Symbol, TextObject};
+use vectorcraft_doc::legend::{Legend, LegendGroup, LegendSample, LineType};
+use vectorcraft_doc::{
+    Appearance, AppearanceItem, CharStyle, Dash, DocCoord, Document, ImageBlob, ImageObject, LAYER_COLORS, LayerColor, LineCap, LinkInfo, Node,
+    NodeKind, Symbol, TextObject,
+};
 use vectorcraft_geom::{Affine, FillRule, PathData, Point, Rect};
 
 use super::ImportOptions;
@@ -133,12 +137,34 @@ impl<'d, 'a> Build<'d, 'a> {
         self.symbol_map = Affine::new([k, 0.0, 0.0, -k, 0.0, 0.0]);
         self.lw_scale = if self.o.scale_lineweights { k / natural } else { 1.0 };
         let layers = self.layers(&items);
+        let is_arch = self.o.preserve_coord || items.iter().any(|it| map_desca_layer(&it.props.layer).is_some());
         let Self { mut doc, conv, warnings: notes, .. } = self;
         if !layers.is_empty() {
             doc.layers = layers;
         }
         if let Some(a) = doc.artboards.first_mut() {
             a.rect = Rect::from_origin_size(Point::ZERO, size);
+        }
+        if is_arch {
+            let ppm = k;
+            let scale = (1000.0 * vectorcraft_doc::coord::MM) / ppm;
+            let origin_x = -offset.x / ppm;
+            let origin_y = offset.y / ppm;
+            doc.coord = Some(DocCoord {
+                scale: if scale.is_finite() && scale > 0.0 {
+                    scale
+                } else if self.o.scale.is_some_and(|s| s > 0.0) {
+                    self.o.scale.unwrap_or(20.0)
+                } else {
+                    20.0
+                },
+                epsg: 5186,
+                origin_x,
+                origin_y,
+                anchor_x: 0.0,
+                anchor_y: 0.0,
+                elevation_datum: "해발".to_string(),
+            });
         }
         doc.fix_next_id();
         let mut warnings = conv.warnings;
@@ -174,7 +200,9 @@ impl<'d, 'a> Build<'d, 'a> {
         };
         // Centred: the art's centre on the artboard's; else the drawing's origin (fitted art: its
         // bottom-left corner) on the artboard's bottom-left corner.
-        let offset = if self.o.center {
+        let offset = if self.o.preserve_coord && !self.o.center {
+            Point::new(-b.x0 * k, size.height + b.y0 * k)
+        } else if self.o.center {
             Point::new(size.width / 2.0 - b.center().x * k, size.height / 2.0 + b.center().y * k)
         } else if self.o.fit {
             Point::new(-b.x0 * k, size.height + b.y0 * k)
@@ -267,6 +295,19 @@ impl<'d, 'a> Build<'d, 'a> {
                 let cells = b.into_iter().flat_map(|b| ins.cells.iter().map(move |m| m.transform_rect_bbox(b)));
                 let attribs: Vec<Option<Rect>> = ins.attribs.iter().map(|a| self.item_bounds(a, depth)).collect();
                 cells.map(Some).chain(attribs).fold(None, vectorcraft_geom::union_opt)
+            }
+            Geom::Image(im) => {
+                let w = im.size_px.0 as f64;
+                let h = im.size_px.1 as f64;
+                let p0 = im.insert;
+                let p1 = Point::new(p0.x + w * im.u_vec.x, p0.y + w * im.u_vec.y);
+                let p2 = Point::new(p0.x + h * im.v_vec.x, p0.y + h * im.v_vec.y);
+                let p3 = Point::new(p0.x + w * im.u_vec.x + h * im.v_vec.x, p0.y + w * im.u_vec.y + h * im.v_vec.y);
+                let x0 = p0.x.min(p1.x).min(p2.x).min(p3.x);
+                let x1 = p0.x.max(p1.x).max(p2.x).max(p3.x);
+                let y0 = p0.y.min(p1.y).min(p2.y).min(p3.y);
+                let y1 = p0.y.max(p1.y).max(p2.y).max(p3.y);
+                Some(Rect::new(x0, y0, x1, y1))
             }
         }
         .filter(|r| [r.x0, r.y0, r.x1, r.y1].iter().all(|v| v.is_finite()))
@@ -393,7 +434,8 @@ impl<'d, 'a> Build<'d, 'a> {
         let map = self.map;
         for it in items {
             let Some(node) = self.item(it, map, &top, 0) else { continue };
-            let name = if self.o.merge_layers { "" } else { it.props.layer.as_str() };
+            let raw_name = if self.o.merge_layers { "" } else { it.props.layer.as_str() };
+            let name = map_desca_layer(raw_name).unwrap_or(raw_name);
             let i = *index.entry(name.to_uppercase()).or_insert_with(|| {
                 layers.push((name.to_string(), vec![]));
                 layers.len() - 1
@@ -410,12 +452,25 @@ impl<'d, 'a> Build<'d, 'a> {
                 let color = LayerColor::Preset((i % LAYER_COLORS.len()) as u8);
                 let label = if name.is_empty() { "Layer 1" } else { &name };
                 let mut l = Node::layer(id, label, color);
-                if let Some(def) = self.d.layer(&name) {
+                if label == "desca 원본" {
+                    l.visible = false;
+                    l.locked = true;
+                    if let NodeKind::Layer { printable, template, dim_images, .. } = &mut l.kind {
+                        *template = true;
+                        *printable = false;
+                        *dim_images = Some(50);
+                    }
+                } else if let Some(def) = self.d.layer(&name) {
                     l.visible = !def.hidden;
                     l.locked = def.locked;
                     if let NodeKind::Layer { printable, .. } = &mut l.kind {
                         *printable = def.plot;
                     }
+                }
+                if let Some(legend) = desca_layer_legend(label)
+                    && let NodeKind::Layer { legend: leg, .. } = &mut l.kind
+                {
+                    *leg = Some(Box::new(legend));
                 }
                 if let Some(c) = l.children_mut() {
                     *c = children;
@@ -435,6 +490,7 @@ impl<'d, 'a> Build<'d, 'a> {
             Geom::Path { bp, fill, width } => self.path(bp, *fill, *width, &it.props, map, inh)?,
             Geom::Text(t) => self.text(t, &it.props, map, inh)?,
             Geom::Insert(ins) => return self.insert(ins, &it.props, map, inh, depth),
+            Geom::Image(im) => self.image(im, &it.props, map)?,
         };
         node.opacity = self.opacity(&it.props, inh);
         self.nodes += 1;
@@ -508,13 +564,65 @@ impl<'d, 'a> Build<'d, 'a> {
             fill: Paint::solid(rgb_color(self.rgb(p, inh))),
             ..default
         };
-        let mut obj = TextObject::point(Point::ZERO, &t.text, style);
+        let mut text_content = t.text.clone();
+        let upper_layer = p.layer.trim().to_uppercase();
+        if upper_layer == "LEVEL_TEXT" || upper_layer == "해발 숫자" || upper_layer == "해발숫자" {
+            let trimmed = text_content.trim();
+            if !trimmed.ends_with('m')
+                && !trimmed.ends_with('M')
+                && !trimmed.is_empty()
+                && (trimmed.parse::<f64>().is_ok()
+                    || (trimmed.chars().any(|c| c.is_ascii_digit()) && !trimmed.contains('m') && !trimmed.contains('M')))
+            {
+                text_content = format!("{trimmed}m");
+            }
+        }
+        let mut obj = TextObject::point(Point::ZERO, &text_content, style);
         obj.xf = m * Affine::scale(1.0 / s);
         obj.para.justify = t.justify;
         if let Some(span) = t.span {
             fill_span(&mut obj, span, s);
         }
         Some(Node::new(self.doc.alloc_id(), NodeKind::Text(Box::new(obj))))
+    }
+
+    fn image(&mut self, im: &super::entity::ImageItem, _p: &Props, map: Affine) -> Option<Node> {
+        let (w, h) = im.size_px;
+        let u = im.u_vec;
+        let v = im.v_vec;
+        let p0 = im.insert;
+        let cad_xf = Affine::new([u.x, u.y, -v.x, -v.y, p0.x + (h as f64) * v.x, p0.y + (h as f64) * v.y]);
+        let doc_xf = map * cad_xf;
+
+        let path = self.d.imagedefs.get(&im.imagedef_handle).cloned().unwrap_or_default();
+        let key = if !im.imagedef_handle.is_empty() {
+            format!("dxf_img_{}", im.imagedef_handle.to_lowercase())
+        } else {
+            format!("dxf_img_{}", self.doc.alloc_id().0)
+        };
+
+        let link = if !path.is_empty() { Some(LinkInfo::new(&path)) } else { None };
+
+        #[cfg(not(target_arch = "wasm32"))]
+        let file_bytes = (!path.is_empty()).then(|| std::fs::read(&path).ok()).flatten();
+        #[cfg(target_arch = "wasm32")]
+        let file_bytes: Option<Vec<u8>> = None;
+
+        if let Some(bytes) = file_bytes {
+            let mime = if bytes.starts_with(&[0xff, 0xd8]) { "image/jpeg" } else { "image/png" };
+            self.doc.images.insert(key.clone(), ImageBlob::new(mime, bytes));
+        } else {
+            const TRANSPARENT_PNG: [u8; 67] = [
+                0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00,
+                0x00, 0x01, 0x08, 0x06, 0x00, 0x00, 0x00, 0x1F, 0x15, 0xC4, 0x89, 0x00, 0x00, 0x00, 0x0A, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9C, 0x63,
+                0x00, 0x01, 0x00, 0x00, 0x05, 0x00, 0x01, 0x0D, 0x0A, 0x2D, 0xB4, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60,
+                0x82,
+            ];
+            self.doc.images.insert(key.clone(), ImageBlob::new("image/png", TRANSPARENT_PNG.to_vec()).with_proxy());
+        }
+
+        let obj = ImageObject { key, width: w, height: h, xf: doc_xf, link, placement: Default::default() };
+        Some(Node::new(self.doc.alloc_id(), NodeKind::Image(obj)))
     }
 
     /// An insert: a symbol instance per copy (anonymous blocks: a group of their art), grouped
@@ -617,4 +725,90 @@ fn unique(base: &str, taken: impl Fn(&str) -> bool) -> String {
         return base.to_string();
     }
     (2..).map(|i| format!("{base} {i}")).find(|n| !taken(n)).unwrap_or_else(|| base.to_string())
+}
+
+/// Archaeological / desca section layer mapping (Trowel, J007).
+fn map_desca_layer(raw: &str) -> Option<&'static str> {
+    let s = raw.trim();
+    let upper = s.to_uppercase();
+    if upper == "SECTION_PROFILE" || upper == "단면선" {
+        Some("단면선 (잘린 땅)")
+    } else if upper == "LEVEL_TEXT" || upper == "해발숫자" || upper == "해발 숫자" {
+        Some("해발 숫자")
+    } else if upper.starts_with("LEVEL_") || upper.starts_with("LEVEL-") || upper == "LEVEL" || upper == "LEVELS" || upper == "LEVEL_LINE" {
+        Some("desca 원본")
+    } else if upper == "STONE" || upper == "ROCK" || upper == "보이는 돌" || upper == "보이는돌" {
+        Some("보이는 돌·유물")
+    } else if upper == "CUT_STONE" || upper == "CUTSTONE" || upper == "잘린 돌" || upper == "잘린돌" {
+        Some("잘린 돌·유물·기와")
+    } else if upper == "STRATA" || upper == "토층선" {
+        Some("토층선")
+    } else if upper == "DISTURB" || upper == "교란" {
+        Some("교란")
+    } else {
+        None
+    }
+}
+
+/// Predefined archaeological legend for mapped layers (Trowel, J007).
+fn desca_layer_legend(label: &str) -> Option<Legend> {
+    match label {
+        "단면선 (잘린 땅)" => Some(Legend {
+            weight: Some(0.8),
+            line: LineType::Solid,
+            sample: LegendSample::Line,
+            group: Some(LegendGroup::Section),
+            favourite: true,
+            ..Legend::default()
+        }),
+        "잘린 돌·유물·기와" => Some(Legend {
+            weight: Some(0.8),
+            line: LineType::Solid,
+            sample: LegendSample::Area,
+            group: Some(LegendGroup::Section),
+            favourite: true,
+            ..Legend::default()
+        }),
+        "보이는 돌·유물" => Some(Legend {
+            weight: Some(0.5),
+            line: LineType::Solid,
+            sample: LegendSample::Area,
+            group: Some(LegendGroup::Section),
+            favourite: false,
+            ..Legend::default()
+        }),
+        "토층선" => Some(Legend {
+            weight: Some(0.5),
+            line: LineType::Solid,
+            sample: LegendSample::Line,
+            group: Some(LegendGroup::Section),
+            favourite: true,
+            ..Legend::default()
+        }),
+        "교란" => Some(Legend {
+            weight: Some(0.5),
+            line: LineType::Solid,
+            sample: LegendSample::Area,
+            group: Some(LegendGroup::Section),
+            favourite: false,
+            ..Legend::default()
+        }),
+        "해발 숫자" => Some(Legend {
+            weight: None,
+            line: LineType::Solid,
+            sample: LegendSample::Mark("152.5m".to_string()),
+            group: Some(LegendGroup::Section),
+            favourite: false,
+            ..Legend::default()
+        }),
+        "desca 원본" => Some(Legend {
+            weight: None,
+            line: LineType::Solid,
+            sample: LegendSample::Line,
+            group: Some(LegendGroup::Section),
+            favourite: false,
+            ..Legend::default()
+        }),
+        _ => None,
+    }
 }

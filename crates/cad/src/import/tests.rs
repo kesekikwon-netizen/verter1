@@ -916,3 +916,102 @@ fn entities_extruded_along_minus_z_are_mirrored() {
     let b = bounds(&leaves(&doc)[0]);
     assert!((b.center().x + 50.0).abs() < 1e-6, "the centre's x is mirrored: {b:?}");
 }
+
+#[test]
+fn cp949_korean_text_and_layers_are_decoded() {
+    let test_str = "단면선 (잘린 땅)";
+    let (encoded, _, _) = encoding_rs::EUC_KR.encode(test_str);
+    let decoded = reader::decode(&encoded);
+    assert_eq!(decoded, test_str);
+
+    // Test with $DWGCODEPAGE header
+    let header_str = "  0\nSECTION\n  2\nHEADER\n  9\n$DWGCODEPAGE\n  3\nANSI_949\n  0\nENDSEC\n  0\nSECTION\n  2\nENTITIES\n  0\nTEXT\n  1\n";
+    let footer_str = "\n 10\n0\n 20\n0\n 40\n10\n  0\nENDSEC\n  0\nEOF\n";
+    let mut full = header_str.as_bytes().to_vec();
+    full.extend_from_slice(&encoded);
+    full.extend_from_slice(footer_str.as_bytes());
+
+    let doc = open(&full, &points()).document;
+    let leaf = &leaves(&doc)[0];
+    if let NodeKind::Text(t) = &leaf.kind {
+        assert_eq!(t.plain_text(), test_str);
+    } else {
+        panic!("expected text entity");
+    }
+}
+
+#[test]
+fn image_entity_and_imagedef_are_imported() {
+    let dxf = "  0\nSECTION\n  2\nOBJECTS\n  0\nIMAGEDEF\n  5\n2A\n  1\nsection_photo.png\n 10\n800\n 20\n600\n  0\nENDSEC\n  0\nSECTION\n  2\nENTITIES\n  0\nIMAGE\n  5\n3B\n  8\nPHOTO\n 10\n10.0\n 20\n20.0\n 11\n0.5\n 21\n0.0\n 12\n0.0\n 22\n0.5\n 13\n800\n 23\n600\n 340\n2A\n  0\nENDSEC\n  0\nEOF\n";
+    let doc = open(dxf.as_bytes(), &points()).document;
+    let leaf = &leaves(&doc)[0];
+    if let NodeKind::Image(im) = &leaf.kind {
+        assert_eq!(im.width, 800);
+        assert_eq!(im.height, 600);
+        assert_eq!(im.link.as_ref().map(|l| l.path.as_str()), Some("section_photo.png"));
+        assert!(doc.images.contains_key(&im.key));
+    } else {
+        panic!("expected image node, got {:?}", leaf.kind);
+    }
+}
+
+#[test]
+fn desca_section_layers_and_level_text_are_mapped() {
+    let dxf = "  0\nSECTION\n  2\nENTITIES\n\
+  0\nLINE\n  8\nSECTION_PROFILE\n 10\n0\n 20\n150\n 11\n10\n 21\n150\n\
+  0\nLINE\n  8\nLEVEL_50\n 10\n0\n 20\n150\n 11\n10\n 21\n150\n\
+  0\nTEXT\n  8\nLEVEL_TEXT\n 10\n0\n 20\n150\n 40\n2.5\n  1\n150.5\n\
+  0\nLINE\n  8\nSTONE\n 10\n1\n 20\n151\n 11\n2\n 21\n151\n\
+  0\nLINE\n  8\nCUT_STONE\n 10\n2\n 20\n151\n 11\n3\n 21\n151\n\
+  0\nLINE\n  8\nSTRATA\n 10\n0\n 20\n152\n 11\n5\n 21\n152\n\
+  0\nLINE\n  8\nDISTURB\n 10\n5\n 20\n152\n 11\n6\n 21\n152\n\
+  0\nENDSEC\n  0\nEOF\n";
+    let doc = open(dxf.as_bytes(), &points()).document;
+    let layer_names: Vec<String> = doc.layers.iter().map(|l| l.display_name()).collect();
+    assert!(layer_names.iter().any(|n| n == "단면선 (잘린 땅)"), "expected 단면선 (잘린 땅) in {layer_names:?}");
+    assert!(layer_names.iter().any(|n| n == "desca 원본"), "expected desca 원본 in {layer_names:?}");
+    assert!(layer_names.iter().any(|n| n == "해발 숫자"), "expected 해발 숫자 in {layer_names:?}");
+    assert!(layer_names.iter().any(|n| n == "보이는 돌·유물"), "expected 보이는 돌·유물 in {layer_names:?}");
+    assert!(layer_names.iter().any(|n| n == "잘린 돌·유물·기와"), "expected 잘린 돌·유물·기와 in {layer_names:?}");
+    assert!(layer_names.iter().any(|n| n == "토층선"), "expected 토층선 in {layer_names:?}");
+    assert!(layer_names.iter().any(|n| n == "교란"), "expected 교란 in {layer_names:?}");
+
+    // desca 원본 should be hidden template layer
+    let desca_layer = doc.layers.iter().find(|l| l.display_name() == "desca 원본").unwrap();
+    assert!(!desca_layer.visible, "desca 원본 must be hidden");
+    assert!(desca_layer.locked, "desca 원본 must be locked");
+    assert!(desca_layer.is_template(), "desca 원본 must be template");
+
+    // LEVEL_TEXT "150.5" should be mapped with "m" appended -> "150.5m"
+    let text_leaf = leaves(&doc).into_iter().find(|n| matches!(n.kind, NodeKind::Text(_))).unwrap();
+    if let NodeKind::Text(t) = &text_leaf.kind {
+        assert_eq!(t.plain_text(), "150.5m");
+    } else {
+        panic!("expected text node");
+    }
+
+    // DocCoord should be auto registered because desca layers are present
+    assert!(doc.coord.is_some(), "doc.coord should be set for desca section");
+}
+
+#[test]
+fn preserve_coord_preserves_real_world_coordinates() {
+    let dxf = "  0\nSECTION\n  2\nENTITIES\n\
+  0\nLINE\n  8\nSURVEY\n 10\n148000.0\n 20\n98150.0\n 11\n148020.0\n 21\n98160.0\n\
+  0\nENDSEC\n  0\nEOF\n";
+    let opts = ImportOptions { preserve_coord: true, center: false, scale: Some(20.0), ..ImportOptions::default() };
+    let doc = open(dxf.as_bytes(), &opts).document;
+    let coord = doc.coord.as_ref().expect("DocCoord must be set when preserve_coord is true");
+    assert_eq!(coord.scale_label(), "1:20");
+    assert_eq!(coord.epsg, 5186);
+
+    let leaf = &leaves(&doc)[0];
+    if let NodeKind::Path { path, .. } = &leaf.kind {
+        let p0 = path.subpaths[0].anchors[0].p;
+        let (tm_x, tm_y) = coord.pt_to_tm(p0.x, p0.y);
+        assert!((tm_x - 148000.0).abs() < 1e-4, "X coord preserved: {tm_x}");
+        assert!((tm_y - 98150.0).abs() < 1e-4, "Y coord preserved: {tm_y}");
+    } else {
+        panic!("expected path");
+    }
+}

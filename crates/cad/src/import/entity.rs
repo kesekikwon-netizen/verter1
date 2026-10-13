@@ -158,6 +158,16 @@ pub(crate) struct InsertItem {
     pub attribs: Vec<Item>,
 }
 
+/// A raster image entity (IMAGE).
+#[derive(Clone, Debug)]
+pub(crate) struct ImageItem {
+    pub insert: Point,
+    pub u_vec: Point,
+    pub v_vec: Point,
+    pub size_px: (u32, u32),
+    pub imagedef_handle: String,
+}
+
 #[derive(Clone, Debug)]
 pub(crate) enum Geom {
     /// A path in world coordinates; `fill`: a filled area (hatch, solid), else a line of
@@ -169,6 +179,7 @@ pub(crate) enum Geom {
     },
     Text(TextItem),
     Insert(InsertItem),
+    Image(ImageItem),
 }
 
 /// An entity as art: its geometry and its properties.
@@ -257,6 +268,7 @@ impl Converter {
             "INSERT" => self.insert(g, group.get(1..).unwrap_or(&[])),
             // A dimension draws the anonymous block of its lines, arrows and text.
             "DIMENSION" => Some(Geom::Insert(InsertItem { block: g.name(2)?.to_uppercase(), cells: vec![Affine::IDENTITY], attribs: vec![] })),
+            "IMAGE" => self.image(g),
             _ => None,
         }
     }
@@ -324,6 +336,16 @@ impl Converter {
         }
         Some(Geom::Path { bp, fill: true, width: 0.0 })
     }
+
+    fn image(&mut self, g: &[Pair<'_>]) -> Option<Geom> {
+        let insert = g.point(10);
+        let u_vec = Point::new(g.num_or(11, 1.0), g.num_or(21, 0.0));
+        let v_vec = Point::new(g.num_or(12, 0.0), g.num_or(22, 1.0));
+        let width_px = g.int_or(13, 1).max(1) as u32;
+        let height_px = g.int_or(23, 1).max(1) as u32;
+        let imagedef_handle = g.name(340).unwrap_or("").to_uppercase();
+        Some(Geom::Image(ImageItem { insert, u_vec, v_vec, size_px: (width_px, height_px), imagedef_handle }))
+    }
 }
 
 /// Is the geometry within [`MAX_COORD`] of the origin?
@@ -336,6 +358,7 @@ fn in_range(g: &Geom) -> bool {
         }
         Geom::Text(t) => origin(&t.xf) && t.height <= MAX_COORD,
         Geom::Insert(i) => i.cells.iter().all(|m| origin(m) && m.as_coeffs().iter().all(|v| v.is_finite() && v.abs() <= MAX_COORD)),
+        Geom::Image(im) => near(im.insert),
     }
 }
 
@@ -359,6 +382,8 @@ fn is_known(kind: &str) -> bool {
             | "MTEXT"
             | "INSERT"
             | "DIMENSION"
+            | "IMAGE"
+            | "IMAGEDEF"
             | "ATTDEF"
             | "SEQEND"
             | "VERTEX"

@@ -18,6 +18,7 @@ vectorcraft-pathops = { workspace = true }
 vectorcraft-text = { workspace = true }
 kurbo = { workspace = true }
 image = { workspace = true }
+encoding_rs = { workspace = true }
 
 [dev-dependencies]
 serde_json = { workspace = true }

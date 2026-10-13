@@ -33,6 +33,7 @@ struct Params {
     scale: Option<f64>,
     scale_lineweights: Option<bool>,
     center: Option<bool>,
+    preserve_coord: Option<bool>,
     merge_layers: Option<bool>,
 }
 
@@ -58,6 +59,8 @@ pub(super) fn options(cmd: &str, p: Option<&Value>) -> Result<ImportOptions> {
         Some([w, h]) if w > 0.0 && h > 0.0 && w.max(h) <= crate::MAX_COORD => (w, h),
         Some(_) => return Err(bad(cmd, "dxf fitTo must be [width, height], positive")),
     };
+    let preserve_coord = q.preserve_coord.unwrap_or(d.preserve_coord);
+    let center = q.center.unwrap_or(if preserve_coord { false } else { d.center });
     Ok(ImportOptions {
         layout: q.layout.filter(|l| !l.trim().is_empty()),
         fit: q.fit.unwrap_or(d.fit),
@@ -65,7 +68,8 @@ pub(super) fn options(cmd: &str, p: Option<&Value>) -> Result<ImportOptions> {
         unit,
         scale: q.scale,
         scale_lineweights: q.scale_lineweights.unwrap_or(d.scale_lineweights),
-        center: q.center.unwrap_or(d.center),
+        center,
+        preserve_coord,
         merge_layers: q.merge_layers.unwrap_or(d.merge_layers),
     })
 }

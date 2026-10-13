@@ -76,14 +76,51 @@ pub(crate) struct Record<'a> {
     pub g: &'a [Pair<'a>],
 }
 
-/// The text of a DXF file: UTF-8 (DXF 2007 and later), else the Windows code page older versions
+fn detect_codepage(bytes: &[u8]) -> Option<&'static encoding_rs::Encoding> {
+    let head_len = bytes.len().min(8192);
+    let head = &bytes[..head_len];
+    let pos = head.windows(12).position(|w| w == b"$DWGCODEPAGE")?;
+    let rest = &head[pos + 12..];
+    let s = std::str::from_utf8(rest).ok()?;
+    let mut lines = s.lines().map(str::trim);
+    while let Some(line) = lines.next() {
+        if line == "3" {
+            let val = lines.next()?;
+            let upper = val.to_ascii_uppercase();
+            if upper.contains("949") || upper.contains("EUC-KR") || upper.contains("KOREAN") || upper.contains("UHC") {
+                return Some(encoding_rs::EUC_KR);
+            } else if upper.contains("932") || upper.contains("SJIS") || upper.contains("SHIFT_JIS") {
+                return Some(encoding_rs::SHIFT_JIS);
+            } else if upper.contains("936") || upper.contains("GBK") {
+                return Some(encoding_rs::GBK);
+            } else if upper.contains("950") || upper.contains("BIG5") {
+                return Some(encoding_rs::BIG5);
+            } else if upper.contains("1252") || upper.contains("ANSI_1252") {
+                return Some(encoding_rs::WINDOWS_1252);
+            }
+            break;
+        }
+    }
+    None
+}
+
+/// The text of a DXF file: UTF-8 (DXF 2007 and later), codepage specified in `$DWGCODEPAGE`
+/// (e.g. CP949 / EUC-KR for Korean CAD drawings), else the Windows code page older versions
 /// write (a byte order mark is dropped).
 pub(crate) fn decode(bytes: &[u8]) -> Cow<'_, str> {
     let bytes = bytes.strip_prefix(b"\xEF\xBB\xBF").unwrap_or(bytes);
-    match std::str::from_utf8(bytes) {
-        Ok(s) => Cow::Borrowed(s),
-        Err(_) => Cow::Owned(bytes.iter().map(|b| windows_1252(*b)).collect()),
+    if let Some(enc) = detect_codepage(bytes) {
+        let (res, _, _) = enc.decode(bytes);
+        return Cow::Owned(res.into_owned());
     }
+    if let Ok(s) = std::str::from_utf8(bytes) {
+        return Cow::Borrowed(s);
+    }
+    // If not valid UTF-8, test if it decodes as CP949 without replacement errors
+    if let Some(s) = encoding_rs::EUC_KR.decode_without_bom_handling_and_without_replacement(bytes) {
+        return Cow::Owned(s.into_owned());
+    }
+    Cow::Owned(bytes.iter().map(|b| windows_1252(*b)).collect())
 }
 
 /// A byte of the Windows Western code page.
@@ -221,6 +258,8 @@ pub(crate) struct Drawing<'a> {
     pub entities: Vec<Record<'a>>,
     /// Model space first, then the paper layouts in tab order.
     pub layouts: Vec<LayoutDef>,
+    /// IMAGEDEF records by handle (upper-case hex handle -> image file path).
+    pub imagedefs: HashMap<String, String>,
     /// How many sections the file has (none: not a drawing).
     pub sections: usize,
 }
@@ -277,6 +316,13 @@ impl<'a> Drawing<'a> {
                     }
                 }
                 _ => {}
+            }
+        }
+        for r in &objects {
+            if r.kind == "IMAGEDEF"
+                && let (Some(h), Some(path)) = (r.g.name(5), r.g.name(1))
+            {
+                d.imagedefs.insert(h.to_uppercase(), path.to_string());
             }
         }
         d.read_blocks(&blocks, &mut block_records);
