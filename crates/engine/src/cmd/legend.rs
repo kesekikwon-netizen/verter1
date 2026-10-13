@@ -35,6 +35,51 @@ pub fn specs() -> Vec<CommandSpec> {
             cut_face
         ),
         cmd!(
+            "drawing.newTemplate",
+            "New Archaeological Template",
+            [],
+            None,
+            "{kind?: \"plan\"|\"section\"|\"finds\"|\"sheet\", name?: string} create a new archaeological drawing from a standard template with its legend layers",
+            always,
+            new_template
+        ),
+        cmd!(
+            "drawing.newPlan",
+            "New Plan Drawing",
+            [],
+            None,
+            "{name?: string} create a new 1:20 archaeological plan drawing with standard plan layers",
+            always,
+            new_plan
+        ),
+        cmd!(
+            "drawing.newSection",
+            "New Section Drawing",
+            [],
+            None,
+            "{name?: string} create a new 1:20 section and soil stratum drawing with section layers",
+            always,
+            new_section
+        ),
+        cmd!(
+            "drawing.newFinds",
+            "New Finds Drawing",
+            [],
+            None,
+            "{name?: string} create a new 1:1 artifact drafting drawing with finds layers",
+            always,
+            new_finds
+        ),
+        cmd!(
+            "drawing.newSheet",
+            "New Plate Sheet",
+            [],
+            None,
+            "{name?: string} create a new A3 report plate layout with plate layers",
+            always,
+            new_sheet
+        ),
+        cmd!(
             "legend.set",
             "Set Legend Entry",
             [],
@@ -674,6 +719,111 @@ fn add_group(s: &mut Session, p: &Value) -> Result<Value> {
         Ok(ids)
     })?;
     Ok(json!({ "added": added.iter().map(|i| i.0).collect::<Vec<_>>(), "skipped": skipped }))
+}
+
+fn new_template(s: &mut Session, p: &Value) -> Result<Value> {
+    const C: &str = "drawing.newTemplate";
+    let kind = match str_param(p, "kind") {
+        Some(k) => k.to_lowercase(),
+        None => "plan".to_string(),
+    };
+    let (w, h, group_opt, default_name) = match kind.as_str() {
+        "plan" => (1190.551, 841.890, Some(LegendGroup::Plan), "평면도 1"),
+        "section" => (1190.551, 841.890, Some(LegendGroup::Section), "단면도 1"),
+        "finds" => (595.276, 841.890, Some(LegendGroup::Finds), "유물 실측도 1"),
+        "sheet" => (1190.551, 841.890, None, "도판 1"),
+        _ => return Err(bad(C, format!("unknown template kind `{kind}` (expected `plan`, `section`, `finds`, `sheet`)"))),
+    };
+    let title = str_param(p, "name").or_else(|| str_param(p, "title")).unwrap_or(default_name);
+    s.execute(
+        "file.new",
+        &json!({
+            "width": w,
+            "height": h,
+            "name": title,
+        }),
+    )?;
+
+    if let Some(g) = group_opt {
+        add_group(s, &json!({ "group": g.key() }))?;
+    } else {
+        // Sheet: create plate layers
+        s.edit("Add Plate Layers", |d, _| {
+            let layers = [
+                ("도판 외곽선 · 도곽", Some(0.5), LineType::Solid),
+                ("정규 표제란", Some(0.3), LineType::Solid),
+                ("도북 방위표 · 복합 축척자", Some(0.3), LineType::Solid),
+                ("도면 배치", Some(0.1), LineType::Solid),
+            ];
+            let at = d.layers.len();
+            for (name, weight, line) in layers {
+                let mut n = make_layer(d, Some(name));
+                if let NodeKind::Layer { legend, .. } = &mut n.kind {
+                    *legend = Some(Box::new(Legend { weight, line, sample: LegendSample::Line, ..Legend::default() }));
+                }
+                d.insert(None, at, n)?;
+            }
+            Ok(())
+        })?;
+    }
+
+    // Clean up empty default layer (named "Layer 1")
+    let empty_default = s
+        .doc()?
+        .doc
+        .layers
+        .iter()
+        .find(|l| l.display_name() == "Layer 1" && l.children().is_none_or(|c| c.is_empty()) && l.legend().is_none())
+        .map(|l| l.id);
+    if let Some(id) = empty_default {
+        s.edit("Remove Default Layer", |d, sel| {
+            d.remove(id)?;
+            sel.prune(d);
+            Ok(())
+        })?;
+    }
+
+    if let Ok(st) = s.doc_mut() {
+        st.active_layer = st.doc.layers.last().map(|l| l.id).or(st.active_layer);
+    }
+
+    Ok(json!({ "kind": kind, "title": title }))
+}
+
+fn new_plan(s: &mut Session, p: &Value) -> Result<Value> {
+    let mut args = p.clone();
+    if !args.is_object() {
+        args = json!({});
+    }
+    args["kind"] = json!("plan");
+    new_template(s, &args)
+}
+
+fn new_section(s: &mut Session, p: &Value) -> Result<Value> {
+    let mut args = p.clone();
+    if !args.is_object() {
+        args = json!({});
+    }
+    args["kind"] = json!("section");
+    new_template(s, &args)
+}
+
+fn new_finds(s: &mut Session, p: &Value) -> Result<Value> {
+    let mut args = p.clone();
+    if !args.is_object() {
+        args = json!({});
+    }
+    args["kind"] = json!("finds");
+    new_template(s, &args)
+}
+
+fn new_sheet(s: &mut Session, p: &Value) -> Result<Value> {
+    let mut args = p.clone();
+    if !args.is_object() {
+        args = json!({});
+    }
+    args["kind"] = json!("sheet");
+    new_template(s, &args)
 }
 
 fn add(s: &mut Session, p: &Value) -> Result<Value> {

@@ -879,3 +879,42 @@ fn cut_face_refuses_when_no_closed_shapes_selected() {
     run(&mut s, "select.set", json!({"ids": []}));
     assert!(s.execute("drawing.cutFace", &json!({})).is_err());
 }
+
+#[test]
+fn new_template_creates_plan_drawing_with_layers() {
+    let mut s = Session::new();
+    let res = s.execute("drawing.newPlan", &json!({})).unwrap();
+    assert_eq!(res["kind"], "plan");
+    let doc = &s.doc().unwrap().doc;
+    assert_eq!(doc.layers.len(), 15);
+    assert!(doc.layers.iter().any(|l| l.display_name() == "굴광선 (유구 면)"));
+    assert!(doc.layers.iter().all(|l| l.display_name() != "Layer 1"));
+    assert_eq!(s.doc().unwrap().active_layer, doc.layers.last().map(|l| l.id));
+}
+
+#[test]
+fn new_template_creates_section_drawing_with_layers() {
+    let mut s = Session::new();
+    let res = s.execute("drawing.newSection", &json!({"name": "남북 단면"})).unwrap();
+    assert_eq!(res["kind"], "section");
+    assert_eq!(res["title"], "남북 단면");
+    let doc = &s.doc().unwrap().doc;
+    assert_eq!(doc.layers.len(), 12);
+    assert!(doc.layers.iter().any(|l| l.display_name() == "단면선 (잘린 땅)"));
+}
+
+#[test]
+fn new_template_creates_finds_and_sheet_drawings() {
+    let mut s = Session::new();
+    let finds_res = s.execute("drawing.newFinds", &json!({})).unwrap();
+    assert_eq!(finds_res["kind"], "finds");
+    let doc = &s.doc().unwrap().doc;
+    assert_eq!(doc.layers.len(), 7);
+    assert!(doc.layers.iter().any(|l| l.display_name() == "외형선"));
+
+    let sheet_res = s.execute("drawing.newSheet", &json!({})).unwrap();
+    assert_eq!(sheet_res["kind"], "sheet");
+    let doc = &s.doc().unwrap().doc;
+    assert_eq!(doc.layers.len(), 4);
+    assert!(doc.layers.iter().any(|l| l.display_name() == "도판 외곽선 · 도곽"));
+}

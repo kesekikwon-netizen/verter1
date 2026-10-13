@@ -482,9 +482,9 @@ fn ribbon_follows_the_mockup_and_runs_commands() {
     h.settle();
     assert_eq!(well(&h, "save"), Some(t.action));
     // A tile a later job brings is dimmed and does nothing.
-    assert_eq!(well(&h, "section"), Some(t.panel_darker));
+    assert_eq!(well(&h, "section-line"), Some(t.panel_darker));
     let docs = h.app.session.documents().len();
-    h.click(wid("tile", "section"));
+    h.click(wid("tile", "section-line"));
     assert_eq!((h.app.session.documents().len(), h.app.session.tool_id()), (docs, "pen"));
     assert!(h.app.ui.dialog.is_none());
     // Find a command opens the command palette.
@@ -1002,9 +1002,9 @@ fn status_bar_shows_messages_for_a_while() {
         assert!(!line.contains("to add a corner point"), "the error, the {time} time: {line}");
         h.later(7.0);
     }
-    // Section (J004): what it is and when.
-    h.click(wid("tile", "section"));
-    assert!(h.line_in(bar).contains("Section: coming soon (J004)"), "{}", h.line_in(bar));
+    // Section Line (J009): what it is and when.
+    h.click(wid("tile", "section-line"));
+    assert!(h.line_in(bar).contains("Section Line: coming soon (J009)"), "{}", h.line_in(bar));
     h.later(5.0);
     // Cut Face runs with J014: with nothing selected, status explains what to select.
     h.click(wid("palette-cut", ()));
@@ -2500,4 +2500,53 @@ fn j014_hatch_and_cut_face_and_estimate_controls() {
     h.settle();
     let layer = h.app.session.active().unwrap().doc.node(first).unwrap().clone();
     assert_eq!(layer.legend().unwrap().hatch, vectorcraft_doc::Hatch::Deg45);
+}
+
+#[test]
+fn trowel_home_screen_displays_dashboard_and_creates_templates() {
+    let mut h = Harness::new();
+    h.app.run("app.home", json!({})).unwrap();
+    h.settle();
+
+    assert!(crate::menus::home_showing(&h.app));
+    let has = |s: &str| h.texts.iter().any(|p| p.text.contains(s));
+    assert!(has("Trowel"), "Home shows Trowel brand");
+    assert!(has("조사 연동") || has("Survey Link"), "shows survey link");
+    assert!(has("최근 도면집") || has("Recent Drawing Set"), "shows recent drawings section");
+    assert!(has("도면 작성 3단계 순서") || has("3-Step Drawing Workflow"), "shows workflow");
+    assert!(has("새 도면 견본 (템플릿 4종)") || has("New Drawing Templates (4 Types)"), "shows template cards");
+
+    // Creating plan template switches away from Home and populates plan layers
+    h.app.run("drawing.newPlan", json!({})).unwrap();
+    h.settle();
+    assert!(!crate::menus::home_showing(&h.app));
+    assert_eq!(h.app.session.documents().len(), 2);
+    let doc = &h.app.session.active().unwrap().doc;
+    assert_eq!(doc.layers.len(), 15);
+    assert!(doc.layers.iter().any(|l| l.display_name() == "굴광선 (유구 면)"));
+}
+
+#[test]
+fn ribbon_new_drawing_tiles_are_active() {
+    let mut h = Harness::new();
+    let _r_plan = h.rect(wid("tile", "plan")).expect("plan tile");
+    let r_section = h.rect(wid("tile", "section")).expect("section tile");
+    let r_finds = h.rect(wid("tile", "finds")).expect("finds tile");
+    let _r_sheet = h.rect(wid("tile", "sheet")).expect("sheet tile");
+
+    // Click section tile
+    h.click_at(r_section.center());
+    h.settle();
+    assert_eq!(h.app.session.documents().len(), 2);
+    let doc = &h.app.session.active().unwrap().doc;
+    assert_eq!(doc.layers.len(), 12);
+    assert!(doc.layers.iter().any(|l| l.display_name() == "단면선 (잘린 땅)"));
+
+    // Click finds tile
+    h.click_at(r_finds.center());
+    h.settle();
+    assert_eq!(h.app.session.documents().len(), 3);
+    let doc2 = &h.app.session.active().unwrap().doc;
+    assert_eq!(doc2.layers.len(), 7);
+    assert!(doc2.layers.iter().any(|l| l.display_name() == "외형선"));
 }

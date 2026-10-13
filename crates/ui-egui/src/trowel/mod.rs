@@ -17,6 +17,7 @@ mod card;
 mod center;
 mod control;
 mod drawings;
+pub(crate) mod home;
 mod legend;
 mod menu;
 mod palette;

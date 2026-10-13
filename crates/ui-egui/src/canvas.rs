@@ -1867,6 +1867,10 @@ fn draw_overlays(p: &egui::Painter, xf: &Xf, overlays: &[Overlay], t: &Tokens, l
 
 /// The Home screen (`app.home`; with no document open, unless its preference is off).
 fn home(app: &mut VectorcraftApp, ui: &mut Ui, rect: egui::Rect) {
+    if app.ui.trowel {
+        crate::trowel::home::show(app, ui, rect);
+        return;
+    }
     let t = Tokens::get(ui.ctx());
     ui.painter().rect_filled(rect, 0.0, t.panel_darker);
     let inner = rect.shrink2(vec2((rect.width() - 820.0).max(40.0) / 2.0, 60.0));

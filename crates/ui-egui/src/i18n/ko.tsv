@@ -4291,3 +4291,59 @@ trowel	{what} · Coming soon · {job}	{what} · 준비 중 · {job}
 trowel	{what}: coming soon ({job})	{what}: 준비 중 ({job})
 trowel	{w} Apart ↺	{w} 따로 ↺
 trowel	…and {n} more	…외 {n}줄
+trowel	Survey Link	조사 연동
+trowel	Gwangnyeong-ri 1 (Strata GPKG)	광령리1 (Strata GPKG)
+trowel	Coordinate System	좌표계
+trowel	EPSG:5186 Central Origin	EPSG:5186 중부원점
+trowel	Drawing Set Path	도면집 경로
+trowel	Desktop › Gwangnyeong-ri 1 › Drawings	바탕 화면 › 광령리1 › 도면
+trowel	Connection Status	연결 상태
+trowel	Synchronized	정상 동기화
+trowel	Korean Excavation CAD & Artifact Drafting	한국 매장유산 실측도면 · 유물 실측 전문 CAD
+trowel	Start a new archaeological drawing or resume your excavation drawing set.	오늘의 실측 도면을 새로 제도하거나, 발굴조사 도면집을 이어서 엽니다.
+trowel	Directly integrated 1:1 with Strata (hgis) field survey data for reports and plates.	Strata(hgis) 현장 조사 데이터와 1:1로 결합하여 도면과 보고서 도판을 완성합니다.
+trowel	New Drawing (⌘N)	새 도면 만들기 (⌘N)
+trowel	Open Drawing Set (⌘O)	도면집 열기 (⌘O)
+trowel	Resume Work	이어서 작업
+trowel	Saved	저장됨
+trowel	Gwangnyeong-ri 1 · Dwelling 1 Plan	광령리1 · 1호 주거지 평면
+trowel	Resume →	이어서 열기 →
+trowel	Survey Name	조사명
+trowel	Drawing Name	도면명
+trowel	Type	종류
+trowel	Scale	축척
+trowel	CRS	좌표계
+trowel	Status	상태
+trowel	Modified	마지막 수정
+trowel	Recent Drawing Set	최근 도면집
+trowel	Search drawing / survey	도면명·조사명 검색
+trowel	3-Step Drawing Workflow	도면 작성 3단계 순서
+trowel	Gwangnyeong-ri 1 baseline	광령리1 기준
+trowel	1. Field Survey & Underlay Alignment	1. 현장 실측 & 밑그림 정합
+trowel	Scan grid alignment 2-pt/4-pt, GPS GCP mapping (error 0.82mm passed)	스캔 방안지 실측도 2점·4점 정합, GPS GCP 기준점 좌표 매핑 (오차 0.82mm 검수 통과)
+trowel	2. CAD Drafting	2. CAD 실측 제도
+trowel	Next	다음
+trowel	0.1–1.0 pt lines & cut-face hatches, feature poly/postholes/elevations	0.1~1.0pt 규격 선 및 단면 빗금(잘린 면), 유구 굴광선·주혈·표고점 실측 배치 진행 중
+trowel	3. Plate Layout & Report Publication	3. 도판 배치 & 보고서 출력
+trowel	A3/A4 sheet layout, north arrow, scale bar, title block, validation	A3/A4 도판 대지 배치, 방위표, 복합 축척자, 정규 표제란, 국가유산청 규격 검수 및 출판
+trowel	New Drawing Templates (4 Types)	새 도면 견본 (템플릿 4종)
+trowel	Plan Template (1:20)	평면도 견본 (1:20)
+trowel	Border line, TM coordinate grid, feature/posthole/spot-height legend	도곽선, TM 좌표 격자, 유구/주혈/표고 범례
+trowel	Section & Stratum (1:20)	단면·토층도 (1:20)
+trowel	Elevation baseline (EL.), 10cm sub-lines, stratum description table	해발 기준선(EL.), 10cm 보조선, 토층 해설표
+trowel	Artifact Drafting (1:1)	유물 실측도 (1:1)
+trowel	Center line, symmetric section, 3-point rim arc, 1cm grid	중심선, 대칭 단면, 3점 구경 측정 호, 1cm 모눈
+trowel	Report Plate (A3)	보고서 종합도판 (A3)
+trowel	Grid north arrow, complex scale bar, official title block	공용 도북, 복합 축척 막대, 국가유산 정규 표제란
+trowel	Strata GIS (Gwangnyeong-ri 1.gpkg) connected	Strata GIS (광령리1.gpkg) 연결됨
+trowel	Coordinate System: EPSG:5186 Central Origin (Normal)	작업 좌표계: EPSG:5186 중부원점 (정상)
+trowel	Tablet: Wacom Intuos Pro (Detected)	타블렛: Wacom Intuos Pro (인식됨)
+trowel	Font: Noto Serif KR / Noto Sans KR (Applied)	글꼴: Noto Serif KR / Noto Sans KR (적용됨)
+trowel	Cultural Heritage Excavation Standards v1 Passed	국가유산 발굴조사 유의사항 v1 검수 통과
+trowel	Unsaved	저장 안 됨
+	New Archaeological Template	새 고고학 도면 견본
+	New Plan Drawing	새 평면도
+	New Section Drawing	새 단면도
+	New Finds Drawing	새 유물 실측도
+	New Plate Sheet	새 보고서 종합도판
+
