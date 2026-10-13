@@ -15,6 +15,7 @@ use super::*;
 enum Item {
     Weights,
     Revert,
+    CutFace,
 }
 
 pub(super) fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
@@ -41,6 +42,25 @@ pub(super) fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
                     app.status(e);
                 }
             }
+            Some(Item::CutFace) => match app.run("drawing.cutFace", json!({})) {
+                Ok(v) => {
+                    let count = v["faces"].as_u64().unwrap_or(0);
+                    let lines = v["lines"].as_u64().unwrap_or(0);
+                    let msg = if let Some(w) = v["warning"].as_str() {
+                        crate::i18n::fmt(
+                            tw!("Cut Face: {count} shapes, {lines} hatch lines ({warning})"),
+                            &[("count", &count.to_string()), ("lines", &lines.to_string()), ("warning", w)],
+                        )
+                    } else {
+                        crate::i18n::fmt(
+                            tw!("Cut Face: {count} shapes, {lines} hatch lines"),
+                            &[("count", &count.to_string()), ("lines", &lines.to_string())],
+                        )
+                    };
+                    app.status(msg);
+                }
+                Err(e) => app.status(e),
+            },
             None => {}
         }
     });
@@ -52,6 +72,7 @@ fn drawing_menu(ui: &mut Ui, open: bool, chosen: &Cell<Option<Item>>) {
     let live = [
         (tw!("Change Weights at Once…"), tw!("Change every line's weight at once"), Item::Weights),
         (tw!("Revert to the Legend"), tw!("The selected lines, or every line set apart when nothing is selected"), Item::Revert),
+        (tw!("Cut Face"), tw!("Apply 0.8 pt outer border and 0.1 pt 1.0 mm hatch lines to closed shapes"), Item::CutFace),
     ];
     for (label, tip, item) in live {
         if ui.add_enabled(open, egui::Button::new(label)).on_hover_text(tip).clicked() {
@@ -60,7 +81,7 @@ fn drawing_menu(ui: &mut Ui, open: bool, chosen: &Cell<Option<Item>>) {
         }
     }
     let groups: [&[(&str, &str)]; 4] = [
-        &[(tw!("Cut Face"), "J014"), (tw!("Make Level Lines"), "J015")],
+        &[(tw!("Make Level Lines"), "J015")],
         &[(tw!("Scale and Coordinate System…"), "J006"), (tw!("Align Underlay…"), "J008")],
         &[(tw!("Insert Legend Table"), "J012"), (tw!("Insert Title Block"), "J012")],
         &[(tw!("Send to Strata…"), "J019")],

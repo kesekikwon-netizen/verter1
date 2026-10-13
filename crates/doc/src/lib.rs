@@ -69,7 +69,7 @@ pub use assets::ExportAsset;
 pub use corners::LiveCorners;
 pub use graph::{GraphKind, GraphSpec, MAX_GRAPH_CATEGORIES, MAX_GRAPH_SERIES, SeriesPaint, TickLength, ValueAxisSide};
 pub use hit::{Hit, HitKind};
-pub use legend::{Legend, LegendGroup, LegendSample, LineType};
+pub use legend::{Hatch, Legend, LegendGroup, LegendSample, LineType};
 pub use links::{LinkInfo, PlacementOptions};
 pub use live::{BlendOrientation, BlendSpacing, BlendSpec, EnvelopeKind, GradientMesh, MeshPoint};
 pub use metadata::{CopyrightStatus, DocMetadata};

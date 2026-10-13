@@ -8,7 +8,7 @@ use std::sync::Arc;
 use proptest::prelude::*;
 use serde_json::{Value, json};
 use vectorcraft_doc::legend::{MAX_DASHES, MAX_KEY, MAX_MARK, MAX_WEIGHT};
-use vectorcraft_doc::{Dash, Document, LayerColor, Legend, LegendGroup, LegendSample, LineType, Node, NodeKind};
+use vectorcraft_doc::{Dash, Document, Hatch, LayerColor, Legend, LegendGroup, LegendSample, LineType, Node, NodeKind};
 use vectorcraft_format::{VERSION, load, save};
 
 /// The saved layer's kind object (where its layer fields are).
@@ -33,6 +33,7 @@ fn a_legend_survives_save_and_open() {
             sample: LegendSample::Area,
             strata: Some("feature_poly".into()),
             group: Some(LegendGroup::Plan),
+            hatch: Hatch::Deg45,
         },
         Legend { weight: Some(0.35), line: LineType::Custom(vec![2.5, 1.25]), sample: LegendSample::Mark("③".into()), ..Legend::default() },
         Legend::default(),
@@ -169,6 +170,7 @@ proptest! {
             sample: mark.map_or(LegendSample::Area, LegendSample::Mark),
             strata,
             group: None,
+            hatch: Hatch::None,
         };
         let mut d = Document::new(10.0, 10.0);
         set_legend(&mut d, legend);
@@ -191,6 +193,7 @@ proptest! {
             sample: LegendSample::Mark("③".into()),
             strata: Some("artifact_point".into()),
             group: Some(LegendGroup::Finds),
+            hatch: Hatch::Deg135,
         });
         let mut bytes = save(&d, false);
         for (i, b) in flips {

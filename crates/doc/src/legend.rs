@@ -29,6 +29,9 @@ pub struct Legend {
     pub weight: Option<f64>,
     #[serde(default, skip_serializing_if = "crate::skip::is_default")]
     pub line: LineType,
+    /// Hatch pattern for cut faces and areas (J014).
+    #[serde(default, skip_serializing_if = "crate::skip::is_default")]
+    pub hatch: Hatch,
     /// ★: a row used often (pinned first in its section, clay name).
     #[serde(default, skip_serializing_if = "crate::skip::is_default")]
     pub favourite: bool,
@@ -55,6 +58,43 @@ pub enum LineType {
     DashDot,
     /// Any other dash pattern, in points.
     Custom(Vec<f64>),
+}
+
+/// A hatch pattern for cut faces and areas (design 2.1 §7, J014).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum Hatch {
+    #[default]
+    #[serde(rename = "none")]
+    None,
+    #[serde(rename = "45")]
+    Deg45,
+    #[serde(rename = "135")]
+    Deg135,
+    #[serde(rename = "alt")]
+    Alternate,
+}
+
+impl Hatch {
+    pub const ALL: [Hatch; 4] = [Hatch::None, Hatch::Deg45, Hatch::Deg135, Hatch::Alternate];
+
+    pub fn key(self) -> &'static str {
+        match self {
+            Hatch::None => "none",
+            Hatch::Deg45 => "45",
+            Hatch::Deg135 => "135",
+            Hatch::Alternate => "alt",
+        }
+    }
+
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "none" => Some(Hatch::None),
+            "45" => Some(Hatch::Deg45),
+            "135" => Some(Hatch::Deg135),
+            "alt" => Some(Hatch::Alternate),
+            _ => None,
+        }
+    }
 }
 
 /// The little picture in front of a row's name.
@@ -439,6 +479,7 @@ mod tests {
         let fine = Legend {
             weight: Some(0.35),
             line: LineType::Custom(vec![2.5, 1.25]),
+            hatch: Hatch::None,
             favourite: true,
             sample: LegendSample::Mark("③".into()),
             strata: Some("artifact_point".into()),
@@ -477,6 +518,7 @@ mod tests {
         let row = Legend {
             weight: Some(0.2),
             line: LineType::DashDot,
+            hatch: Hatch::None,
             favourite: true,
             sample: LegendSample::Mark("③".into()),
             strata: Some("artifact_point".into()),
@@ -492,5 +534,9 @@ mod tests {
         assert_eq!(serde_json::to_value(Legend::default()).unwrap_or_default(), serde_json::json!({}), "defaults are not written");
         let custom = Legend { line: LineType::Custom(vec![1.0, 2.0]), sample: LegendSample::Area, ..Legend::default() };
         assert_eq!(serde_json::to_value(&custom).unwrap_or_default(), serde_json::json!({"line": {"custom": [1.0, 2.0]}, "sample": "area"}));
+        let hatched = Legend { hatch: Hatch::Deg45, ..Legend::default() };
+        assert_eq!(serde_json::to_value(&hatched).unwrap_or_default(), serde_json::json!({"hatch": "45"}));
+        let back_hatch: Legend = serde_json::from_value(serde_json::json!({"hatch": "135"})).unwrap_or_default();
+        assert_eq!(back_hatch.hatch, Hatch::Deg135);
     }
 }

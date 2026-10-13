@@ -8,7 +8,7 @@
 
 use serde_json::{Value, json};
 use vectorcraft_doc::legend::{MM, SAME, lines, stroke_of};
-use vectorcraft_doc::{Legend, LineType, Node, NodeId};
+use vectorcraft_doc::{Hatch, Legend, LineType, Node, NodeId};
 use vectorcraft_engine::cmd::legend::LADDER;
 
 use super::card::{self, GAP_X};
@@ -121,7 +121,7 @@ fn body(ui: &mut Ui, row: &Row, t: &Tokens) -> Vec<Ask> {
             ui.disable();
         }
         look(ui, row, t, &mut asks);
-        later(ui, t);
+        later(ui, row, t, &mut asks);
         // ★.
         let r = card::row(ui, "★", ROW_H, t);
         let fav = toggle_rect(ui, r.left_center(), ROW_H, tw!("Often Used"));
@@ -222,18 +222,24 @@ fn look(ui: &mut Ui, row: &Row, t: &Tokens, asks: &mut Vec<Ask>) {
 }
 
 /// What later jobs bring to a row: estimated lines (J009), hatches (J014) and its label (J012).
-fn later(ui: &mut Ui, t: &Tokens) {
+fn later(ui: &mut Ui, row: &Row, t: &Tokens, asks: &mut Vec<Ask>) {
     let r = card::row(ui, tw!("Estimated"), ROW_H, t);
     let estimated = Rect::from_min_size(r.min, vec2(132.0, r.height()));
     card::field_soon(ui, wid("card-estimated", ()), estimated, tw!("Same weight, dashed"), true, (tw!("Estimated Lines"), "J009"), t);
-    let hatches = ["45°", "135°", tw!("Alternate")];
-    let what: Vec<String> = hatches.iter().map(|h| format!("{} {h}", tw!("Hatch"))).collect();
-    let mut parts = vec![Seg { key: "none", label: tw!("None"), on: true, soon: None }];
-    for ((key, label), what) in ["45", "135", "alt"].into_iter().zip(hatches).zip(&what) {
-        parts.push(Seg { key, label, on: false, soon: Some((what, "J014")) });
-    }
+    let h = row.legend.hatch;
+    let parts = vec![
+        Seg { key: "none", label: tw!("None"), on: h == Hatch::None, soon: None },
+        Seg { key: "45", label: "45°", on: h == Hatch::Deg45, soon: None },
+        Seg { key: "135", label: "135°", on: h == Hatch::Deg135, soon: None },
+        Seg { key: "alt", label: tw!("Alternate"), on: h == Hatch::Alternate, soon: None },
+    ];
     let r = card::row(ui, tw!("Hatch"), SEG_H, t);
-    segments(ui, "card-hatch", r.left_center(), &SegLook { h: SEG_H, pad: 6.0, font: font(11.0) }, &parts, t);
+    let (pressed, _) = segments(ui, "card-hatch", r.left_center(), &SegLook { h: SEG_H, pad: 6.0, font: font(11.0) }, &parts, t);
+    if let Some(key) = pressed
+        && parts.iter().any(|p| p.key == key && !p.on)
+    {
+        asks.push(Ask::Set(json!({ "hatch": key })));
+    }
     let r = card::row(ui, tw!("Text"), ROW_H, t);
     let size = Rect::from_min_size(r.min, vec2(70.0, r.height()));
     card::field_soon(ui, wid("card-text", ()), size, "9 pt", false, (tw!("Text Size"), "J012"), t);

@@ -244,6 +244,7 @@ fn text_to(ui: &Ui, at: Pos2, right: f32, s: &str, font: FontId, color: Color32)
 
 /// A small button a later job brings, labelled `label` at `at` (its left centre), 26 points tall.
 /// Returns where it ends.
+#[allow(dead_code)]
 fn button_soon(ui: &Ui, id: egui::Id, at: Pos2, label: &str, strong: bool, job: &str, t: &Tokens) -> f32 {
     let f = if strong { bold(11.0) } else { font(11.0) };
     let r = Rect::from_min_size(pos2(at.x, at.y - 13.0), vec2(width_of(ui, label, f.clone()) + 16.0, 26.0));

@@ -8,8 +8,12 @@ use std::collections::HashSet;
 
 use serde::Serialize;
 use serde_json::{Value, json};
+use vectorcraft_color::Paint;
 use vectorcraft_doc::legend::{MAX_DASHES, MAX_KEY, MAX_MARK, MAX_WEIGHT, clip};
-use vectorcraft_doc::{Dash, Document, Legend, LegendGroup, LegendSample, LineType, Node, NodeId, NodeKind, StrokeLayer, legend};
+use vectorcraft_doc::{
+    Appearance, AppearanceItem, Dash, Document, Hatch, Legend, LegendGroup, LegendSample, LineType, Node, NodeId, NodeKind, StrokeLayer, legend,
+};
+use vectorcraft_geom::{BezPath, CUT_FACE_STROKE_WIDTH, FillRule, HATCH_GAP_PT, HATCH_STROKE_WIDTH, PathData, PathEl, Shape, hatch_deg};
 
 use super::layer::{apply_options, locked_within, make_layer};
 use super::*;
@@ -22,11 +26,20 @@ const MAX_NAME: usize = 512;
 pub fn specs() -> Vec<CommandSpec> {
     vec![
         cmd!(
+            "drawing.cutFace",
+            "Cut Face",
+            [],
+            None,
+            "{ids?: [id…]} apply 0.8 pt outer border and 0.1 pt 1.0 mm hatch lines to closed shapes (Trowel); alternating 45°/135° for adjacent faces → {faces, lines, warning?}",
+            has_doc,
+            cut_face
+        ),
+        cmd!(
             "legend.set",
             "Set Legend Entry",
             [],
             None,
-            "{id?: top-level layer (default: the current layer's), weight?: pt (0–1000)|null (no look), line?: solid|dashed|dotted|dashdot|[dash, gap, …] (pt), favourite?: bool, sample?: line|area|{mark: text}, strata?: Strata layer key|null, group?: plan|section|finds|null, clear?: true (remove the row)} a layer's legend row (Trowel): the default look of its lines. A new look restyles the lines that followed the old one (weight and dashes; dash offset, corner alignment, cap and colour stay); lines set apart and locked lines keep theirs, and a row's first look changes no line. A locked row is refused; one undo step → {id, legend, lines}",
+            "{id?: top-level layer (default: the current layer's), weight?: pt (0–1000)|null (no look), line?: solid|dashed|dotted|dashdot|[dash, gap, …] (pt), favourite?: bool, sample?: line|area|{mark: text}, strata?: Strata layer key|null, group?: plan|section|finds|null, hatch?: none|45|135|alt, clear?: true (remove the row)} a layer's legend row (Trowel): the default look of its lines. A new look restyles the lines that followed the old one (weight and dashes; dash offset, corner alignment, cap and colour stay); lines set apart and locked lines keep theirs, and a row's first look changes no line. A locked row is refused; one undo step → {id, legend, lines}",
             has_doc,
             set
         ),
@@ -175,6 +188,19 @@ fn group_param(p: &Value, key: &str, cmd: &str) -> Result<Option<Option<LegendGr
     }
 }
 
+/// `hatch`: none, 45, 135, alt.
+fn hatch_param(p: &Value, cmd: &str) -> Result<Option<Hatch>> {
+    let Some(v) = p.get("hatch") else { return Ok(None) };
+    let h = match v.as_str() {
+        Some("none") | Some("") => Hatch::None,
+        Some("45") | Some("deg45") => Hatch::Deg45,
+        Some("135") | Some("deg135") => Hatch::Deg135,
+        Some("alt") | Some("alternate") => Hatch::Alternate,
+        _ => return Err(bad(cmd, format!("`hatch` is \"none\", \"45\", \"135\" or \"alt\", not {v}"))),
+    };
+    Ok(Some(h))
+}
+
 // ---------- looks ----------
 
 /// A row's look, when it has one.
@@ -230,13 +256,22 @@ fn set(s: &mut Session, p: &Value) -> Result<Value> {
     let sample = sample_param(p, C)?;
     let strata = strata_param(p, C)?;
     let group = group_param(p, "group", C)?;
+    let hatch = hatch_param(p, C)?;
     let clear = match p.get("clear") {
         None => false,
         Some(Value::Bool(true)) => true,
         Some(v) => return Err(bad(C, format!("`clear` is true, not {v}"))),
     };
-    if !clear && weight.is_none() && line.is_none() && favourite.is_none() && sample.is_none() && strata.is_none() && group.is_none() {
-        return Err(bad(C, "nothing to set: weight, line, favourite, sample, strata, group or clear"));
+    if !clear
+        && weight.is_none()
+        && line.is_none()
+        && favourite.is_none()
+        && sample.is_none()
+        && strata.is_none()
+        && group.is_none()
+        && hatch.is_none()
+    {
+        return Err(bad(C, "nothing to set: weight, line, favourite, sample, strata, group, hatch or clear"));
     }
     let id = row_param(s, p, C)?;
     let d = &s.doc()?.doc;
@@ -264,6 +299,9 @@ fn set(s: &mut Session, p: &Value) -> Result<Value> {
         }
         if let Some(g) = group {
             row.group = g;
+        }
+        if let Some(h) = hatch {
+            row.hatch = h;
         }
         row
     });
@@ -583,8 +621,15 @@ pub fn group_rows(g: LegendGroup) -> Vec<(&'static str, Legend)> {
                 Show::Area => LegendSample::Area,
                 Show::Mark(m) => LegendSample::Mark((*m).to_string()),
             };
-            let legend =
-                Legend { weight: *weight, line: line.clone(), favourite: *favourite, sample, strata: strata.map(str::to_string), group: Some(g) };
+            let legend = Legend {
+                weight: *weight,
+                line: line.clone(),
+                favourite: *favourite,
+                sample,
+                strata: strata.map(str::to_string),
+                group: Some(g),
+                hatch: Hatch::None,
+            };
             (*name, legend)
         })
         .collect()
@@ -685,4 +730,178 @@ fn add(s: &mut Session, p: &Value) -> Result<Value> {
     st.active_layer = Some(id);
     st.layer_rows = vec![id];
     Ok(json!({ "id": id.0, "moved": roots.len() }))
+}
+
+/// Detect whether two Bézier paths touch or overlap within a given tolerance.
+fn path_adjacent(bp1: &BezPath, bp2: &BezPath, tol: f64) -> bool {
+    use kurbo::{ParamCurve, ParamCurveNearest};
+    let b1 = bp1.bounding_box();
+    let b2 = bp2.bounding_box();
+    let tol_sq = tol * tol;
+    if b1.x0 - tol > b2.x1 || b1.x1 + tol < b2.x0 || b1.y0 - tol > b2.y1 || b1.y1 + tol < b2.y0 {
+        return false;
+    }
+    let segs1: Vec<_> = bp1.segments().collect();
+    let segs2: Vec<_> = bp2.segments().collect();
+    for seg1 in &segs1 {
+        let sb1 = seg1.bounding_box();
+        for seg2 in &segs2 {
+            let sb2 = seg2.bounding_box();
+            if sb1.x0 - tol > sb2.x1 || sb1.x1 + tol < sb2.x0 || sb1.y0 - tol > sb2.y1 || sb1.y1 + tol < sb2.y0 {
+                continue;
+            }
+            let p1_0 = seg1.eval(0.0);
+            let p1_1 = seg1.eval(1.0);
+            if seg2.nearest(p1_0, 1e-3).distance_sq <= tol_sq || seg2.nearest(p1_1, 1e-3).distance_sq <= tol_sq {
+                return true;
+            }
+            let p2_0 = seg2.eval(0.0);
+            let p2_1 = seg2.eval(1.0);
+            if seg1.nearest(p2_0, 1e-3).distance_sq <= tol_sq || seg1.nearest(p2_1, 1e-3).distance_sq <= tol_sq {
+                return true;
+            }
+        }
+    }
+    false
+}
+
+fn collect_closed_paths(n: &Node, d: &Document, out: &mut Vec<(NodeId, BezPath)>) {
+    if !d.is_editable(n.id) {
+        return;
+    }
+    match &n.kind {
+        NodeKind::Path { path, .. } if path.subpaths.iter().any(|sp| sp.closed) => {
+            out.push((n.id, path.to_bezpath()));
+        }
+        _ => {
+            if let Some(children) = n.children() {
+                for c in children {
+                    collect_closed_paths(c, d, out);
+                }
+            }
+        }
+    }
+}
+
+fn cut_face(s: &mut Session, p: &Value) -> Result<Value> {
+    const C: &str = "drawing.cutFace";
+    let ids = match p.get("ids") {
+        None | Some(Value::Null) => None,
+        Some(_) => {
+            let mut ids = checked_ids_param(s, p, "ids", C)?;
+            ids.truncate(super::layer::MAX_ROWS * 10);
+            Some(ids)
+        }
+    };
+    let st = s.doc()?;
+    let d = &st.doc;
+
+    let roots: Vec<NodeId> = match ids {
+        Some(ids) => ids,
+        None => super::edit::selected_roots(s)?,
+    };
+
+    let mut faces: Vec<(NodeId, BezPath)> = Vec::new();
+    for r in roots {
+        if let Some(n) = d.node(r) {
+            collect_closed_paths(n, d, &mut faces);
+        }
+    }
+
+    if faces.is_empty() {
+        return Err(bad(C, "select at least one closed shape to create a cut face"));
+    }
+
+    let n_faces = faces.len();
+    let mut adj = vec![vec![]; n_faces];
+    for i in 0..n_faces {
+        for j in (i + 1)..n_faces {
+            if path_adjacent(&faces[i].1, &faces[j].1, 1.0) {
+                adj[i].push(j);
+                adj[j].push(i);
+            }
+        }
+    }
+
+    let mut color: Vec<Option<usize>> = vec![None; n_faces];
+    let mut conflict = false;
+
+    for start in 0..n_faces {
+        if color[start].is_some() {
+            continue;
+        }
+        let mut queue = std::collections::VecDeque::new();
+        color[start] = Some(0);
+        queue.push_back(start);
+
+        while let Some(u) = queue.pop_front() {
+            let u_col = color.get(u).copied().flatten().unwrap_or(0);
+            let next_col = 1 - u_col;
+            if let Some(neighbors) = adj.get(u) {
+                for &v in neighbors {
+                    match color.get(v).copied().flatten() {
+                        Some(v_col) => {
+                            if v_col == u_col {
+                                conflict = true;
+                            }
+                        }
+                        None => {
+                            if let Some(c) = color.get_mut(v) {
+                                *c = Some(next_col);
+                            }
+                            queue.push_back(v);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    let warning = if conflict { Some("3개 이상의 면이 서로 맞닿아 2색 엇갈림이 불가능합니다".to_string()) } else { None };
+
+    let mut total_lines = 0;
+    let warning_ret = warning.clone();
+
+    s.edit("Cut Face", |d, sel| {
+        let mut created_ids = Vec::new();
+        for (i, (face_id, face_bez)) in faces.iter().enumerate() {
+            let angle = if color.get(i).copied().flatten() == Some(1) { 135.0 } else { 45.0 };
+            let hatch_bp = hatch_deg(face_bez, HATCH_GAP_PT, angle);
+            let lines_in_hatch = hatch_bp.elements().iter().filter(|el| matches!(el, PathEl::LineTo(_))).count();
+            total_lines += lines_in_hatch;
+
+            if let Some(node) = d.node_mut(*face_id) {
+                if let Some(st) = node.appearance.stroke_mut() {
+                    st.width = CUT_FACE_STROKE_WIDTH;
+                    st.paint = Paint::solid(Color::BLACK);
+                } else {
+                    node.appearance.items.push(AppearanceItem::Stroke(StrokeLayer::new(Paint::solid(Color::BLACK), CUT_FACE_STROKE_WIDTH)));
+                }
+            }
+
+            if !hatch_bp.is_empty() {
+                let hatch_data = PathData::from_bezpath(&hatch_bp);
+                let hatch_id = d.alloc_id();
+                let mut hatch_node =
+                    Node::new(hatch_id, NodeKind::Path { path: hatch_data, rule: FillRule::NonZero, live: None, clipping: false, guide: false });
+                hatch_node.name = Some(format!("빗금 ({angle:.0}°)"));
+                hatch_node.appearance = Appearance::basic(Paint::None, Paint::solid(Color::BLACK), HATCH_STROKE_WIDTH);
+
+                if let Some((par, idx, _)) = d.position(*face_id) {
+                    d.insert(par, idx + 1, hatch_node)?;
+                    created_ids.push(hatch_id);
+                }
+            }
+        }
+        for cid in created_ids {
+            sel.add(cid);
+        }
+        Ok(())
+    })?;
+
+    Ok(json!({
+        "faces": n_faces,
+        "lines": total_lines,
+        "warning": warning_ret,
+    }))
 }

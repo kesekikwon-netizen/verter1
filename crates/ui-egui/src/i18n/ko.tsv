@@ -4097,6 +4097,7 @@ lighting	Light	조명
 	Change Weights at Once	굵기 한 번에 바꾸기
 	Add Legend Group	범례 묶음 넣기
 	Add to Legend	범례에 더하기
+	Cut Face	잘린 면
 # Trowel's own window (design 2.1, `tw!`): context `trowel`, its archaeology-drawing wording, ahead of
 # the plain rows above (굵기, 실선, 허용치, 선종, 맞추기 where the plain rows say 두께, 단색, 허용 오차, 선, 정렬).
 trowel	= {mm} mm	= {mm} mm
@@ -4117,6 +4118,7 @@ trowel	Alternate	번갈아
 trowel	Apart	따로
 trowel	Apart {n}	따로 {n}
 trowel	Apart {n} → Legend	따로 {n} → 범례대로
+trowel	Apply 0.8 pt outer border and 0.1 pt 1.0 mm hatch lines to closed shapes	닫힌 도형에 0.8 pt 외곽선과 0.1 pt 1.0 mm 빗금을 채웁니다
 trowel	Archaeology	고고학
 trowel	Area and Perimeter	면적·둘레 계산
 trowel	Back to the Legend	범례대로
@@ -4130,6 +4132,8 @@ trowel	Choose	고르세요
 trowel	Choose a Strata Layer	Strata 레이어 고르기
 trowel	Coordinate system not set	좌표계 정하지 않음
 trowel	Cut Face	잘린 면
+trowel	Cut Face: {count} shapes, {lines} hatch lines	잘린 면: {count}개 면, {lines}개 빗금 선
+trowel	Cut Face: {count} shapes, {lines} hatch lines ({warning})	잘린 면: {count}개 면, {lines}개 빗금 선 ({warning})
 trowel	Dash-dot	일점쇄선
 trowel	Dotted	점선
 trowel	Draw with this row · double-click to change it	이 줄로 그립니다 · 두 번 누르면 고칩니다
@@ -4265,6 +4269,7 @@ trowel	To Strata	Strata로
 trowel	Tolerance	허용치
 trowel	Tool	도구
 trowel	Type a weight in points, such as 0.5	굵기를 0.5처럼 pt 단위로 적어 주세요
+trowel	Toggle dashed stroke for estimated lines	추정선(파선) 토글
 trowel	Underlay	밑그림
 trowel	Values	값
 trowel	Weight	굵기

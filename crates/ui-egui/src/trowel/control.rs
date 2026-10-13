@@ -86,9 +86,17 @@ fn drawing(app: &mut VectorcraftApp, ui: &mut Ui, room: Rect, t: &Tokens) {
     label(&format!("{} ›", tool_name(app.session.tool_id())), t.text_dim, &mut x);
     label(tw!("Legend"), t.text_dim, &mut x);
     x = layer_field(app, ui, pos2(x, cy), t) + GAP;
-    // What later jobs bring: estimated lines, closing, pen pressure.
+    // Estimated lines (Dashed toggle).
+    let stroke = crate::panels::current_stroke(app);
+    let is_dashed = stroke.as_ref().and_then(|s| s.dash.as_ref()).is_some_and(|d| d.is_dashed());
     let estimate = toggle_rect(ui, pos2(x, cy), H, tw!("Estimated (Dashed)"));
-    toggle_soon(ui, wid("ctl-estimate", ()), estimate, tw!("Estimated (Dashed)"), "J014", t);
+    if toggle(ui, wid("ctl-estimate", ()), estimate, tw!("Estimated (Dashed)"), is_dashed, t)
+        .on_hover_text(tw!("Toggle dashed stroke for estimated lines"))
+        .clicked()
+    {
+        let new_dash: Option<Vec<f64>> = if is_dashed { None } else { Some(vec![4.0, 2.0]) };
+        crate::panels::stroke::set(app, json!({ "dash": new_dash }));
+    }
     x = estimate.right() + GAP;
     x = divider(ui, x, cy, t);
     let mut x2 = x;

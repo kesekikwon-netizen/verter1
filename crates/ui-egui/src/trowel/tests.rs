@@ -434,8 +434,8 @@ fn drawing_menu_sits_before_view_and_waits_for_its_jobs() {
     h.click_at(at(&h, "Drawing"));
     let items = h.popup_buttons();
     assert_eq!(items.len(), 9, "the Drawing menu's items: {items:?}");
-    // The first two run since J005; the others wait for their jobs.
-    assert!(items.iter().skip(2).all(|(_, enabled)| !enabled), "they wait for their jobs");
+    // The first three run (Weights, Revert, Cut Face); the others wait for their jobs.
+    assert!(items.iter().skip(3).all(|(_, enabled)| !enabled), "they wait for their jobs");
     let shown: String = h.texts.iter().map(|p| p.text.as_str()).collect::<Vec<_>>().join("|");
     for item in ["Weights at Once…", "Make Level Lines", "Scale and Coordinate System…", "Send to Strata…"] {
         assert!(shown.contains(item), "{item} in {shown}");
@@ -857,14 +857,12 @@ fn palette_weight_chip_sets_the_next_stroke() {
     assert!(stroke.dash.is_some());
     h.click(wid("dash", "solid"));
     assert!(h.app.session.shown_stroke().unwrap().dash.is_none());
-    // Hatches and adding a weight wait for J014 and J018: on the wash, like the other things that
-    // come later (the line types run since J005).
-    for id in [wid("hatch", "45"), wid("hatch", "135"), wid("hatch", "alt"), wid("weight-add", ())] {
-        assert_eq!(h.fill_at(h.rect(id).unwrap()), Some(t.panel_darker), "{id:?}");
-    }
+    // Adding a weight waits for J018.
+    assert_eq!(h.fill_at(h.rect(wid("weight-add", ())).unwrap()), Some(t.panel_darker));
+    // Hatch chips run with J014: clicking 45° sets the layer's hatch.
     h.click(wid("hatch", "45"));
+    assert_eq!(h.fill_at(h.rect(wid("hatch", "45")).unwrap()), Some(t.row_selected));
     assert_eq!(h.app.session.shown_stroke().unwrap().width, 0.8);
-    assert_eq!(h.fill_at(h.rect(wid("hatch", "none")).unwrap()), Some(t.row_selected), "no hatch yet");
     // ⋯ pops the Stroke panel out.
     h.click(wid("palette-more", ()));
     assert_eq!(h.app.ui.open_panel.as_deref(), Some("stroke"));
@@ -1004,13 +1002,15 @@ fn status_bar_shows_messages_for_a_while() {
         assert!(!line.contains("to add a corner point"), "the error, the {time} time: {line}");
         h.later(7.0);
     }
-    // Section (J004) and Cut Face (J014): what they are and when.
+    // Section (J004): what it is and when.
     h.click(wid("tile", "section"));
     assert!(h.line_in(bar).contains("Section: coming soon (J004)"), "{}", h.line_in(bar));
-    h.click(wid("palette-cut", ()));
-    assert!(h.line_in(bar).contains("Cut Face: coming soon (J014)"), "{}", h.line_in(bar));
     h.later(5.0);
-    assert!(!h.line_in(bar).contains("coming soon"), "{}", h.line_in(bar));
+    // Cut Face runs with J014: with nothing selected, status explains what to select.
+    h.click(wid("palette-cut", ()));
+    assert!(h.line_in(bar).contains("select at least one closed shape"), "{}", h.line_in(bar));
+    h.later(7.0);
+    assert!(!h.line_in(bar).contains("select at least one closed shape"), "{}", h.line_in(bar));
 }
 
 /// The Underlay tile places a scan as a template (a locked, dimmed layer under the drawing); with
@@ -1857,7 +1857,7 @@ fn drawing_menu_opens_the_weights_card_and_reverts() {
     };
     let items = open(&mut h);
     let enabled: Vec<bool> = items.iter().map(|(_, e)| *e).collect();
-    assert_eq!(enabled, [true, true, false, false, false, false, false, false, false]);
+    assert_eq!(enabled, [true, true, true, false, false, false, false, false, false]);
     h.click_at(h.texts.iter().find(|p| p.text == "Drawing" && bar.contains_rect(p.rect)).unwrap().rect.center());
     h.app.run("select.set", json!({ "ids": [b.0] })).unwrap();
     h.settle();
@@ -2465,4 +2465,39 @@ fn a_soon_note_drops_a_dialogs_ellipsis() {
     let ctx = egui::Context::default();
     super::note_soon(&ctx, "Change All Weights…", "J005");
     assert_eq!(super::soon_note(&ctx).as_deref(), Some("Change All Weights: coming soon (J005)"));
+}
+
+#[test]
+fn j014_hatch_and_cut_face_and_estimate_controls() {
+    let mut h = Harness::new();
+    let first = h.layer_ids()[0];
+
+    // 1. Test ctl-estimate toggle in control bar (with a drawing tool active)
+    h.app.select_tool("pen");
+    h.settle();
+    h.click(wid("ctl-estimate", ()));
+    let stroke = h.app.session.shown_stroke().unwrap();
+    assert!(stroke.dash.is_some(), "clicking ctl-estimate toggles on dashed stroke");
+    h.click(wid("ctl-estimate", ()));
+    let stroke2 = h.app.session.shown_stroke().unwrap();
+    assert!(stroke2.dash.is_none(), "clicking ctl-estimate toggles off dashed stroke");
+
+    // 2. Test Cut Face button with a rectangle selected
+    let rect_id = NodeId(h.app.run("shape.rectangle", json!({"x": 10.0, "y": 10.0, "width": 50.0, "height": 30.0})).unwrap()["id"].as_u64().unwrap());
+    h.app.run("select.set", json!({"ids": [rect_id.0]})).unwrap();
+    h.settle();
+
+    h.click(wid("palette-cut", ()));
+    h.settle();
+    let bar = h.panel(STATUS);
+    assert!(h.line_in(bar).contains("1"), "status reports created cut face");
+
+    // 3. Test card-hatch in row editor
+    h.double_click(wid("legend-row", first.0));
+    h.settle();
+    assert!(h.rect(wid("row-card", ())).is_some());
+    h.click(wid("card-hatch", "45"));
+    h.settle();
+    let layer = h.app.session.active().unwrap().doc.node(first).unwrap().clone();
+    assert_eq!(layer.legend().unwrap().hatch, vectorcraft_doc::Hatch::Deg45);
 }

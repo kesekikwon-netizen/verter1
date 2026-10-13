@@ -804,7 +804,78 @@ fn legend_undo_steps_are_named_after_their_commands() {
     run(&mut s, "legend.add", json!({}));
     assert_eq!(label(&s), "Add to Legend");
     let specs = crate::cmd::legend::specs();
-    for l in ["Set Legend Entry", "Use Legend Entry", "Revert to the Legend", "Change Weights at Once", "Add Legend Group", "Add to Legend"] {
+    for l in
+        ["Cut Face", "Set Legend Entry", "Use Legend Entry", "Revert to the Legend", "Change Weights at Once", "Add Legend Group", "Add to Legend"]
+    {
         assert!(specs.iter().any(|c| c.label == l), "{l} is a command's name");
     }
+}
+
+#[test]
+fn legend_set_handles_hatch_field() {
+    use vectorcraft_doc::Hatch;
+    let mut s = session();
+    let row = layer(&mut s, "토층");
+    run(&mut s, "legend.set", json!({"id": row.0, "hatch": "45"}));
+    assert_eq!(legend_of(&s, row).unwrap().hatch, Hatch::Deg45);
+    run(&mut s, "legend.set", json!({"id": row.0, "hatch": "135"}));
+    assert_eq!(legend_of(&s, row).unwrap().hatch, Hatch::Deg135);
+    run(&mut s, "legend.set", json!({"id": row.0, "hatch": "alt"}));
+    assert_eq!(legend_of(&s, row).unwrap().hatch, Hatch::Alternate);
+    run(&mut s, "legend.set", json!({"id": row.0, "hatch": "none"}));
+    assert_eq!(legend_of(&s, row).unwrap().hatch, Hatch::None);
+    assert!(s.execute("legend.set", &json!({"id": row.0, "hatch": "invalid"})).is_err());
+}
+
+#[test]
+fn cut_face_creates_0_8pt_border_and_0_1pt_hatches() {
+    let mut s = session();
+    let a = rect(&mut s, 0.0);
+    run(&mut s, "select.set", json!({"ids": [a.0]}));
+    let res = run(&mut s, "drawing.cutFace", json!({}));
+    assert_eq!(res["faces"], 1);
+    assert!(res["lines"].as_u64().unwrap() > 0);
+    assert!(res["warning"].is_null());
+
+    // Outer border is 0.8 pt
+    let face_stroke = node(&s, a).appearance.stroke().unwrap().clone();
+    assert_eq!(face_stroke.width, 0.8);
+
+    // Document contains hatch node with 0.1 pt stroke
+    let doc = &s.doc().unwrap().doc;
+    let hatch_node = doc.layers.iter().flat_map(|l| l.children().into_iter().flatten()).find(|n| n.name.as_deref().unwrap_or("").starts_with("빗금"));
+    assert!(hatch_node.is_some());
+    let hatch_stroke = hatch_node.unwrap().appearance.stroke().unwrap();
+    assert_eq!(hatch_stroke.width, 0.1);
+
+    // Undo restores state
+    run(&mut s, "edit.undo", json!({}));
+    let restored_stroke = node(&s, a).appearance.stroke().unwrap().clone();
+    assert_ne!(restored_stroke.width, 0.8);
+}
+
+#[test]
+fn cut_face_alternates_angles_for_adjacent_faces() {
+    let mut s = session();
+    // Two adjacent rectangles sharing an edge at x=40
+    let a = NodeId(run(&mut s, "shape.rectangle", json!({"x": 0.0, "y": 0.0, "width": 40.0, "height": 30.0}))["id"].as_u64().unwrap());
+    let b = NodeId(run(&mut s, "shape.rectangle", json!({"x": 40.0, "y": 0.0, "width": 40.0, "height": 30.0}))["id"].as_u64().unwrap());
+    run(&mut s, "select.set", json!({"ids": [a.0, b.0]}));
+    let res = run(&mut s, "drawing.cutFace", json!({}));
+    assert_eq!(res["faces"], 2);
+    assert!(res["warning"].is_null());
+
+    let doc = &s.doc().unwrap().doc;
+    let hatch_names: Vec<String> =
+        doc.layers.iter().flat_map(|l| l.children().into_iter().flatten()).filter_map(|n| n.name.clone()).filter(|n| n.starts_with("빗금")).collect();
+    assert_eq!(hatch_names.len(), 2);
+    assert!(hatch_names.iter().any(|n| n.contains("45°")));
+    assert!(hatch_names.iter().any(|n| n.contains("135°")));
+}
+
+#[test]
+fn cut_face_refuses_when_no_closed_shapes_selected() {
+    let mut s = session();
+    run(&mut s, "select.set", json!({"ids": []}));
+    assert!(s.execute("drawing.cutFace", &json!({})).is_err());
 }

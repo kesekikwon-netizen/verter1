@@ -10,6 +10,7 @@
 pub mod arc;
 pub mod bez;
 pub mod corners;
+pub mod hatch;
 pub mod hit;
 pub mod path;
 pub mod projective;
@@ -18,6 +19,7 @@ pub mod shapes;
 pub mod snap;
 
 pub use arc::ArcPath;
+pub use hatch::{CUT_FACE_STROKE_WIDTH, HATCH_GAP_PT, HATCH_STROKE_WIDTH, hatch, hatch_deg};
 pub use kurbo;
 pub use kurbo::{Affine, BezPath, CubicBez, Line, ParamCurve, PathEl, PathSeg, Point, Rect, Shape, Size, Vec2};
 pub use path::{Anchor, AnchorKind, FillRule, PathData, SubPath};

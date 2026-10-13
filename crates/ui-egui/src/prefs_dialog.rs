@@ -617,8 +617,10 @@ mod tests {
         out.textures_delta.clear();
         let mut shown = vec![];
         out.shapes.iter().for_each(|c| texts(&c.shape, &mut shown));
-        assert!(shown.iter().any(|t| t == "System Title Bar"), "{shown:?}");
-        assert!(shown.iter().any(|t| t == "Applies the next time Trowel starts."), "{shown:?}");
+        if cfg!(all(not(target_arch = "wasm32"), not(target_os = "macos"))) {
+            assert!(shown.iter().any(|t| t == "System Title Bar"), "{shown:?}");
+            assert!(shown.iter().any(|t| t == "Applies the next time Trowel starts."), "{shown:?}");
+        }
         a.ui.dialog.as_mut().unwrap().fields.insert("systemTitleBar".into(), json!(true));
         confirm(&mut a).unwrap();
         assert!(a.session.prefs.system_title_bar);

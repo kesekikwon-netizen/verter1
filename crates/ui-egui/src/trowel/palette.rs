@@ -7,7 +7,7 @@
 use std::collections::HashSet;
 
 use serde_json::json;
-use vectorcraft_doc::{LineType, NodeId};
+use vectorcraft_doc::{Hatch, LineType, NodeId};
 
 use super::legend::{Card, open_card};
 use super::*;
@@ -58,31 +58,31 @@ pub(super) fn show(app: &mut VectorcraftApp, ui: &mut Ui, r: Rect) {
     chip_soon(ui, add, &t);
     crate::icons::paint(ui, "plus", Rect::from_center_size(add.center(), vec2(12.0, 12.0)), t.text_disabled);
     soon_widget(ui, wid("weight-add", ()), add, tw!("Add a Weight"), "J018");
-    // Hatch: none until J014 brings them.
+    // Hatch: active layer's legend hatch or selection.
     let cy = row(1);
     text(ui, pos2(r.left() + 14.0, cy), Align2::LEFT_CENTER, tw!("Hatch"), font(11.0), t.text_dim);
+    let active_hatch = app
+        .session
+        .active()
+        .and_then(|st| st.current_layer().and_then(|l| st.doc.node(l)).and_then(|n| n.legend()).map(|leg| leg.hatch))
+        .unwrap_or(Hatch::None);
     let mut x = r.left() + CHIPS_X;
     for (key, label) in [("45", "45°"), ("135", "135°"), ("alt", tw!("Alternate")), ("none", tw!("None"))] {
         let sample = key != "none";
         let w = 6.0 + if sample { 16.0 + 4.0 } else { 0.0 } + width_of(ui, label, font(11.0)) + 6.0;
         let chip_r = Rect::from_min_size(pos2(x, cy - CHIP_H / 2.0), vec2(w, CHIP_H));
-        let on = key == "none";
-        if on {
-            chip(ui, chip_r, true, false, &t);
-        } else {
-            chip_soon(ui, chip_r, &t);
-        }
-        let color = if on { t.text } else { t.text_disabled };
+        let on = matches!((key, active_hatch), ("none", Hatch::None) | ("45", Hatch::Deg45) | ("135", Hatch::Deg135) | ("alt", Hatch::Alternate));
+        let resp = ui.interact(chip_r, wid("hatch", key), Sense::click());
+        chip(ui, chip_r, on, resp.hovered(), &t);
+        let color = if on { t.text } else { t.text_dim };
         let mut tx = chip_r.left() + 6.0;
         if sample {
             hatch_sample(ui, Rect::from_min_size(pos2(tx, cy - 6.0), vec2(16.0, 12.0)), key, color);
             tx += 16.0 + 4.0;
         }
         text(ui, pos2(tx, cy), Align2::LEFT_CENTER, label, font(11.0), color);
-        if on {
-            ui.interact(chip_r, wid("hatch", key), Sense::hover());
-        } else {
-            soon_widget(ui, wid("hatch", key), chip_r, &format!("{} {label}", tw!("Hatch")), "J014");
+        if resp.on_hover_text(format!("{} {label}", tw!("Hatch"))).clicked() {
+            let _ = app.run("legend.set", json!({ "hatch": key }));
         }
         x = chip_r.right() + 4.0;
     }
@@ -102,8 +102,10 @@ pub(super) fn show(app: &mut VectorcraftApp, ui: &mut Ui, r: Rect) {
     }
     // Cut Face, and the legend's own buttons.
     let cy = head.bottom() + 2.0 + 3.0 * ROW_H + 4.0 + 13.0;
-    let x = button_soon(ui, wid("palette-cut", ()), pos2(r.left() + 14.0, cy), tw!("Cut Face"), true, "J014", &t) + 4.0;
     let open = app.session.active().is_some();
+    let cut = small_button(ui, wid("palette-cut", ()), pos2(r.left() + 14.0, cy), 26.0, tw!("Cut Face"), open, &t)
+        .on_hover_text(tw!("Apply 0.8 pt outer border and 0.1 pt 1.0 mm hatch lines to closed shapes"));
+    let x = cut.rect.right() + 4.0;
     let add = small_button(ui, wid("palette-to-legend", ()), pos2(x, cy), 26.0, tw!("Add to Legend"), open, &t)
         .on_hover_text(tw!("Make a legend row of this look and put the selected lines on it"));
     let back = small_button(ui, wid("palette-from-legend", ()), pos2(add.rect.right() + 4.0, cy), 26.0, tw!("Back to the Legend"), open, &t)
@@ -111,7 +113,28 @@ pub(super) fn show(app: &mut VectorcraftApp, ui: &mut Ui, r: Rect) {
     if let Some(p) = set {
         crate::panels::stroke::set(app, p);
     }
-    let done = if add.clicked() {
+    let done = if cut.clicked() {
+        match app.run("drawing.cutFace", json!({})) {
+            Ok(v) => {
+                let count = v["faces"].as_u64().unwrap_or(0);
+                let lines = v["lines"].as_u64().unwrap_or(0);
+                let msg = if let Some(w) = v["warning"].as_str() {
+                    crate::i18n::fmt(
+                        tw!("Cut Face: {count} shapes, {lines} hatch lines ({warning})"),
+                        &[("count", &count.to_string()), ("lines", &lines.to_string()), ("warning", w)],
+                    )
+                } else {
+                    crate::i18n::fmt(
+                        tw!("Cut Face: {count} shapes, {lines} hatch lines"),
+                        &[("count", &count.to_string()), ("lines", &lines.to_string())],
+                    )
+                };
+                app.status(msg);
+                Ok(())
+            }
+            Err(e) => Err(e),
+        }
+    } else if add.clicked() {
         add_row(app, ui.ctx())
     } else if back.clicked() {
         back_to_legend(app)
