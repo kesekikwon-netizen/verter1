@@ -4162,5 +4162,13 @@ lighting	Light	Luz
 	Add Standard Title Block	Añadir cuadro de rotulación estándar
 	Generate Sheet Legend Table	Generar tabla de leyenda de lámina
 	Set Sheet Properties	Establecer propiedades de la lámina
+	Barrel Button 1 Action	Acción del botón lateral 1
+	Barrel Button 2 Action	Acción del botón lateral 2
+	Context Menu	Menú contextual
+	Enable Stylus Tilt and Azimuth	Habilitar inclinación y acimut del lápiz
+	Hand / Pan View	Mano / Vista panorámica
+	Stylus Eraser Tip Inversion	Inversión de punta de borrador del lápiz
+	Temporary Eraser	Borrador temporal
+	Temporary Zoom	Zoom temporal
 
 

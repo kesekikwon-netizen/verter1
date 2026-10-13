@@ -583,14 +583,51 @@ fn handle_input(app: &mut VectorcraftApp, ui: &Ui, resp: &egui::Response, rect: 
     }
 
     let tool = app.session.tool_id();
+
+    // J017 (B1): Stylus Eraser Tip Inversion
+    let is_eraser_event =
+        ui.input(|i| i.events.iter().any(|e| matches!(e, egui::Event::PointerButton { button: egui::PointerButton::Extra2, pressed: true, .. })));
+    if is_eraser_event && app.session.prefs.pen_eraser_invert && tool != "eraser" {
+        ui.data_mut(|d| d.insert_temp(egui::Id::new("canvas-eraser-prev-tool"), tool.to_string()));
+        app.select_tool("eraser");
+    }
+    if pointer.any_released() {
+        let prev: Option<String> = ui.data(|d| d.get_temp(egui::Id::new("canvas-eraser-prev-tool")));
+        if let Some(prev) = prev {
+            ui.data_mut(|d| d.remove::<String>(egui::Id::new("canvas-eraser-prev-tool")));
+            app.select_tool(&prev);
+        }
+    }
+
+    // J017 (B3): Update pen active timestamp for palm rejection (only for stylus pen/eraser input)
+    let is_pen_active = ui.input(|i| {
+        i.events.iter().any(|e| {
+            matches!(
+                e,
+                egui::Event::Touch { force: Some(_), .. }
+                    | egui::Event::PointerButton { button: egui::PointerButton::Extra1 | egui::PointerButton::Extra2, .. }
+            )
+        })
+    });
+    if is_pen_active {
+        let pen_now = ui.input(|i| i.time);
+        ui.data_mut(|d| d.insert_temp(egui::Id::new("canvas-pen-last-time"), pen_now));
+    }
+
     // Held, Space is the Hand tool for the moment, and Cmd+Space the Zoom tool (with Alt, zooming
     // out), whatever the tool.
     let zoom_mode = if space { m.command } else { tool == "zoom" };
     let pan_mode = if space { !m.command } else { tool == "hand" };
     let middle_pan = matches!(drag, Some(Drag::Pan { middle: true, .. }));
-    // egui counts a press a few pixels outside the canvas as on it (its interaction radius): only a
-    // press on the canvas itself reaches the tools, else it would land at the canvas's centre.
-    if pointer.primary_pressed()
+
+    // J017 (B2): Stylus Barrel Buttons
+    let barrel_1 = pointer.button_pressed(egui::PointerButton::Extra1)
+        || (pointer.button_pressed(egui::PointerButton::Secondary) && app.session.prefs.pen_barrel_button_1 == "pan" && !m.ctrl);
+    let barrel_2_undo = pointer.button_pressed(egui::PointerButton::Secondary) && app.session.prefs.pen_barrel_button_2 == "undo";
+
+    if barrel_2_undo && drag.is_none() && resp.hovered() {
+        crate::menus::invoke(app, "edit.undo", json!({}));
+    } else if pointer.primary_pressed()
         && resp.hovered()
         && !middle_pan
         && let Some(p) = at
@@ -617,10 +654,10 @@ fn handle_input(app: &mut VectorcraftApp, ui: &Ui, resp: &egui::Response, rect: 
         });
     } else if drag.is_none()
         && resp.hovered()
-        && pointer.button_pressed(egui::PointerButton::Middle)
+        && (pointer.button_pressed(egui::PointerButton::Middle) || barrel_1)
         && let Some(start) = hover
     {
-        // Middle-button drag pans the view whatever the tool.
+        // Middle-button or Stylus Barrel Button drag pans the view whatever the tool.
         ui.data_mut(|dd| dd.insert_temp(drag_id(), Drag::Pan { start, center: v.center, middle: true }));
     } else if let Some(d) = drag {
         // The pointer gone (a pen lifted with its press), the drag ends where it was last seen.
@@ -924,6 +961,15 @@ fn touch_gestures(app: &mut VectorcraftApp, ui: &Ui, rect: egui::Rect, view: vec
     });
     if touches.is_empty() {
         return;
+    }
+    // J017 (B3): Palm rejection - suppress touch inputs/gestures if stylus pen was active recently
+    if app.session.prefs.pen_palm_rejection {
+        let pen_time: Option<f64> = ui.data(|d| d.get_temp(egui::Id::new("canvas-pen-last-time")));
+        if let Some(last_pen) = pen_time
+            && (now - last_pen).abs() < 0.6
+        {
+            return;
+        }
     }
     let key = egui::Id::new("canvas-touch");
     let mut taps: crate::touch::Taps = ui.data(|d| d.get_temp(key)).unwrap_or_default();

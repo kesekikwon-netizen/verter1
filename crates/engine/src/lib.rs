@@ -581,6 +581,10 @@ pub struct Prefs {
     pub pen_palm_rejection: bool,
     pub pen_disable_gestures: bool,
     pub canvas_button_row: bool,
+    pub pen_eraser_invert: bool,
+    pub pen_barrel_button_1: String,
+    pub pen_barrel_button_2: String,
+    pub pen_tilt_support: bool,
     // Graphic Styles panel
     /// Override Character Color: a graphic style applied to type replaces its characters' fill
     /// and stroke with the style's fills and strokes.
@@ -790,6 +794,10 @@ impl Default for Prefs {
             pen_palm_rejection: true,
             pen_disable_gestures: true,
             canvas_button_row: true,
+            pen_eraser_invert: true,
+            pen_barrel_button_1: s("pan"),
+            pen_barrel_button_2: s("menu"),
+            pen_tilt_support: true,
             override_char_color: true,
             pattern_tile_edge_color: {
                 let [r, g, b] = vectorcraft_doc::LAYER_COLORS[0].1;

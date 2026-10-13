@@ -4143,5 +4143,13 @@ lighting	Light	Світло
 	Add Standard Title Block	Додати стандартний кутовий штамп
 	Generate Sheet Legend Table	Створити таблицю легенди планшета
 	Set Sheet Properties	Задати властивості планшета
+	Barrel Button 1 Action	Дія бічної кнопки 1
+	Barrel Button 2 Action	Дія бічної кнопки 2
+	Context Menu	Контекстне меню
+	Enable Stylus Tilt and Azimuth	Увімкнути нахил та азимут стилуса
+	Hand / Pan View	Рука / Панорамування
+	Stylus Eraser Tip Inversion	Інверсія гумки стилуса
+	Temporary Eraser	Тимчасова гумка
+	Temporary Zoom	Тимчасовий масштаб
 
 

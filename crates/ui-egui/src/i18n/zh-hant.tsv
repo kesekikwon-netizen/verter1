@@ -3573,5 +3573,13 @@ lighting	Light	光源
 	Add Standard Title Block	新增標準標題欄
 	Generate Sheet Legend Table	產生圖版圖例表
 	Set Sheet Properties	設定圖版屬性
+	Barrel Button 1 Action	側鍵 1 操作
+	Barrel Button 2 Action	側鍵 2 操作
+	Context Menu	內容功能表
+	Enable Stylus Tilt and Azimuth	啟用手寫筆傾斜和方位角
+	Hand / Pan View	抓手 / 平移檢視
+	Stylus Eraser Tip Inversion	觸控筆橡皮擦端反轉
+	Temporary Eraser	臨時橡皮擦
+	Temporary Zoom	臨時縮放
 
 

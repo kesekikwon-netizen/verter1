@@ -769,6 +769,10 @@ fn pen_and_tablet_preferences_can_be_set_and_read() {
     assert!(s.prefs.pen_palm_rejection);
     assert!(s.prefs.pen_disable_gestures);
     assert!(s.prefs.canvas_button_row);
+    assert!(s.prefs.pen_eraser_invert);
+    assert_eq!(s.prefs.pen_barrel_button_1, "pan");
+    assert_eq!(s.prefs.pen_barrel_button_2, "menu");
+    assert!(s.prefs.pen_tilt_support);
 
     set_pref(&mut s, "penPressureFollow", json!(true));
     assert!(s.prefs.pen_pressure_follow);
@@ -787,4 +791,16 @@ fn pen_and_tablet_preferences_can_be_set_and_read() {
 
     set_pref(&mut s, "canvasButtonRow", json!(false));
     assert!(!s.prefs.canvas_button_row);
+
+    set_pref(&mut s, "penEraserInvert", json!(false));
+    assert!(!s.prefs.pen_eraser_invert);
+
+    set_pref(&mut s, "penBarrelButton1", json!("undo"));
+    assert_eq!(s.prefs.pen_barrel_button_1, "undo");
+
+    set_pref(&mut s, "penBarrelButton2", json!("zoom"));
+    assert_eq!(s.prefs.pen_barrel_button_2, "zoom");
+
+    set_pref(&mut s, "penTiltSupport", json!(false));
+    assert!(!s.prefs.pen_tilt_support);
 }

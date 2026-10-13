@@ -4172,5 +4172,13 @@ lighting	Light	Lumière
 	Add Standard Title Block	Ajouter un cartouche standard
 	Generate Sheet Legend Table	Générer la table de légende de planche
 	Set Sheet Properties	Définir les propriétés de la planche
+	Barrel Button 1 Action	Action du bouton latéral 1
+	Barrel Button 2 Action	Action du bouton latéral 2
+	Context Menu	Menu contextuel
+	Enable Stylus Tilt and Azimuth	Activer l'inclinaison et l'azimut du stylet
+	Hand / Pan View	Main / Vue panoramique
+	Stylus Eraser Tip Inversion	Inversion de pointe gomme du stylet
+	Temporary Eraser	Gomme temporaire
+	Temporary Zoom	Zoom temporaire
 
 

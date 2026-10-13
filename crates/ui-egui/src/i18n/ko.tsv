@@ -4480,5 +4480,19 @@ trowel	Extract active layers and generate plate legend table	현재 활성 레�
 trowel	North arrow added	도북 방위표를 추가했습니다
 trowel	Scale bar added	축척 막대를 추가했습니다
 trowel	Title block added	표제란을 추가했습니다
-trowel	Legend table generated	범례표를 생성했습니다
-
+	Barrel Button 1 Action	펜 1번 옆버튼 동작
+	Barrel Button 2 Action	펜 2번 옆버튼 동작
+	Context Menu	상황 메뉴
+	Enable Stylus Tilt and Azimuth	스타일러스 기울기 및 방위각 사용
+	Hand / Pan View	손 / 화면 이동 (팬)
+	Stylus Eraser Tip Inversion	스타일러스 지우개 끝 자동 반전
+	Temporary Eraser	임시 지우개
+	Temporary Zoom	임시 돋보기
+trowel	Barrel 1	옆버튼 1
+trowel	Barrel 2	옆버튼 2
+trowel	Pan	화면 이동
+trowel	Menu	상황 메뉴
+trowel	Invert to Eraser on Stylus Eraser Tip	지우개 끝 접촉 시 임시 지우개 전환
+trowel	Stylus Tip	펜촉
+trowel	Eraser Tip	지우개 끝
+trowel	Barrel Active	옆버튼 동작

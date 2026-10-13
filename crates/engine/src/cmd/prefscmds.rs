@@ -90,6 +90,14 @@ pub const GPU_PREFERENCES: &[(&str, &str)] =
 const BLACK: &[(&str, &str)] = &[("accurate", "Display All Blacks Accurately"), ("rich", "Display All Blacks as Rich Black")];
 const BLACK_OUT: &[(&str, &str)] = &[("accurate", "Output All Blacks Accurately"), ("rich", "Output All Blacks as Rich Black")];
 const PEN_CURVES: &[(&str, &str)] = &[("soft", "Soft"), ("normal", "Normal (Archaeological CAD)"), ("firm", "Firm")];
+const BARREL_ACTIONS: &[(&str, &str)] = &[
+    ("pan", "Hand / Pan View"),
+    ("undo", "Undo"),
+    ("eraser", "Temporary Eraser"),
+    ("menu", "Context Menu"),
+    ("zoom", "Temporary Zoom"),
+    ("none", "None"),
+];
 
 macro_rules! p {
     ($key:literal, $cat:literal, $sec:literal, $label:literal, bool) => {
@@ -340,6 +348,10 @@ pub const PREF_SPECS: &[PrefSpec] = &[
     p!("penPalmRejection", "Devices", "Stylus & Drawing", "Palm Rejection", bool),
     p!("penDisableGestures", "Devices", "Windows Ink", "Disable Windows Pen Gestures", bool),
     p!("canvasButtonRow", "Devices", "Touch & Buttons", "Canvas Quick Button Row", bool),
+    p!("penEraserInvert", "Devices", "Stylus & Drawing", "Stylus Eraser Tip Inversion", bool),
+    p!("penBarrelButton1", "Devices", "Stylus & Drawing", "Barrel Button 1 Action", choice(BARREL_ACTIONS)),
+    p!("penBarrelButton2", "Devices", "Stylus & Drawing", "Barrel Button 2 Action", choice(BARREL_ACTIONS)),
+    p!("penTiltSupport", "Devices", "Stylus & Drawing", "Enable Stylus Tilt and Azimuth", bool),
     // Graphic Styles panel menu
     p!("overrideCharColor", "Type", "Graphic Styles", "Override Character Color", bool),
     // Object → Pattern → Tile Edge Color

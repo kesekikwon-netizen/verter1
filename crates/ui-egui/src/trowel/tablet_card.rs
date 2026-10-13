@@ -23,6 +23,10 @@ pub(crate) struct TabletRule {
     pub palm_rejection: bool,
     pub disable_gestures: bool,
     pub canvas_button_row: bool,
+    pub eraser_invert: bool,
+    pub barrel_button_1: String,
+    pub barrel_button_2: String,
+    pub tilt_support: bool,
 }
 
 impl Default for TabletRule {
@@ -34,6 +38,10 @@ impl Default for TabletRule {
             palm_rejection: true,
             disable_gestures: true,
             canvas_button_row: true,
+            eraser_invert: true,
+            barrel_button_1: "pan".to_string(),
+            barrel_button_2: "menu".to_string(),
+            tilt_support: true,
         }
     }
 }
@@ -71,6 +79,10 @@ pub(super) fn show(app: &mut VectorcraftApp, ctx: &egui::Context, place: card::P
         palm_rejection: app.session.prefs.pen_palm_rejection,
         disable_gestures: app.session.prefs.pen_disable_gestures,
         canvas_button_row: app.session.prefs.canvas_button_row,
+        eraser_invert: app.session.prefs.pen_eraser_invert,
+        barrel_button_1: app.session.prefs.pen_barrel_button_1.clone(),
+        barrel_button_2: app.session.prefs.pen_barrel_button_2.clone(),
+        tilt_support: app.session.prefs.pen_tilt_support,
     });
 
     let title = tw!("Tablet & Pen Settings");
@@ -92,6 +104,10 @@ pub(super) fn show(app: &mut VectorcraftApp, ctx: &egui::Context, place: card::P
                     "penPalmRejection": rule.palm_rejection,
                     "penDisableGestures": rule.disable_gestures,
                     "canvasButtonRow": rule.canvas_button_row,
+                    "penEraserInvert": rule.eraser_invert,
+                    "penBarrelButton1": rule.barrel_button_1,
+                    "penBarrelButton2": rule.barrel_button_2,
+                    "penTiltSupport": rule.tilt_support,
                 });
                 if let Err(e) = app.run("prefs.set", json!({ "values": values })) {
                     app.status(e);
@@ -133,15 +149,19 @@ fn body(ui: &mut Ui, rule: &mut TabletRule, t: &Tokens) -> Vec<Ask> {
     tolerances_row(ui, rule, t);
     ui.add_space(6.0);
 
-    // 4. Options (Palm Rejection, Windows Gestures, Canvas Buttons)
+    // 4. Stylus Barrel Buttons
+    barrel_buttons_rows(ui, rule, t);
+    ui.add_space(6.0);
+
+    // 5. Options (Palm Rejection, Eraser Invert, Tilt, Windows Gestures, Canvas Buttons)
     options_rows(ui, rule, t);
     ui.add_space(6.0);
 
-    // 5. Interactive Pen Test Drawing Field
+    // 6. Interactive Pen Test Drawing Field
     pen_test_area(ui, &rule.curve, t);
     ui.add_space(8.0);
 
-    // 6. Action Buttons
+    // 7. Action Buttons
     let b_w = card::button_w(ui, tw!("Save Settings"));
     let c_w = card::button_w(ui, tw!("Cancel"));
     let places = card::flow(ui, 28.0, &[b_w, c_w]);
@@ -204,6 +224,44 @@ fn pressure_curve_row(ui: &mut Ui, rule: &mut TabletRule, t: &Tokens) {
     }
 }
 
+/// Stylus barrel button assignment rows (Button 1 and Button 2).
+fn barrel_buttons_rows(ui: &mut Ui, rule: &mut TabletRule, t: &Tokens) {
+    let choices1 = [("pan", tw!("Pan")), ("undo", tw!("Undo")), ("eraser", tw!("Eraser")), ("menu", tw!("Menu"))];
+    let choices2 = [("menu", tw!("Menu")), ("undo", tw!("Undo")), ("zoom", tw!("Zoom")), ("eraser", tw!("Eraser"))];
+
+    barrel_segmented_row(ui, tw!("Barrel 1"), &mut rule.barrel_button_1, &choices1, "b1", t);
+    ui.add_space(4.0);
+    barrel_segmented_row(ui, tw!("Barrel 2"), &mut rule.barrel_button_2, &choices2, "b2", t);
+}
+
+fn barrel_segmented_row(ui: &mut Ui, label: &str, current: &mut String, choices: &[(&str, &str)], key_prefix: &str, t: &Tokens) {
+    let r = card::row(ui, label, SEG_H, t);
+    field_box(ui, r, t.input, t.input_border);
+    let seg_w = r.width() / choices.len() as f32;
+
+    for (i, (key, text_label)) in choices.iter().enumerate() {
+        let seg = Rect::from_min_size(pos2(r.left() + i as f32 * seg_w, r.top()), vec2(seg_w, SEG_H));
+        let selected = current == key;
+        let resp = ui.interact(seg, wid("tablet-barrel", (key_prefix, *key)), Sense::click());
+
+        if selected {
+            ui.painter().rect(seg.shrink(1.0), CornerRadius::same(6), t.row_selected, Stroke::new(1.0, t.text), StrokeKind::Inside);
+        } else if resp.hovered() {
+            ui.painter().rect_filled(seg.shrink(1.0), CornerRadius::same(6), t.hover);
+        }
+        if i > 0 {
+            ui.painter().vline(seg.left() + 0.5, seg.y_range(), Stroke::new(1.0, t.border));
+        }
+
+        let col = if selected || resp.hovered() { t.text } else { t.text_dim };
+        text(ui, seg.center(), Align2::CENTER_CENTER, text_label, font(11.0), col);
+
+        if resp.clicked() {
+            *current = key.to_string();
+        }
+    }
+}
+
 /// Tolerances display (3 pt tap, 8 px close).
 fn tolerances_row(ui: &mut Ui, rule: &mut TabletRule, t: &Tokens) {
     let r = card::row(ui, tw!("Tolerances"), ROW_H, t);
@@ -222,7 +280,7 @@ fn tolerances_row(ui: &mut Ui, rule: &mut TabletRule, t: &Tokens) {
     text(ui, r2.center(), Align2::CENTER_CENTER, &close_str, mono(11.0), t.text);
 }
 
-/// Palm rejection, Windows pen gestures, and Canvas button row checkboxes.
+/// Palm rejection, eraser invert, tilt, Windows pen gestures, and Canvas button row checkboxes.
 fn options_rows(ui: &mut Ui, rule: &mut TabletRule, t: &Tokens) {
     let check_box = |ui: &mut Ui, id_str: &str, val: &mut bool, label: &str| {
         let r = card::row(ui, "", 20.0, t);
@@ -245,6 +303,8 @@ fn options_rows(ui: &mut Ui, rule: &mut TabletRule, t: &Tokens) {
     };
 
     check_box(ui, "palm", &mut rule.palm_rejection, tw!("Palm Rejection (Ignore touch while drawing)"));
+    check_box(ui, "eraser_inv", &mut rule.eraser_invert, tw!("Invert to Eraser on Stylus Eraser Tip"));
+    check_box(ui, "tilt", &mut rule.tilt_support, tw!("Enable Stylus Tilt and Azimuth"));
     check_box(ui, "gestures", &mut rule.disable_gestures, tw!("Disable Windows Pen Gestures / Flicks"));
     check_box(ui, "canvas_bar", &mut rule.canvas_button_row, tw!("Show Canvas Quick Action Buttons"));
 }
@@ -260,6 +320,16 @@ fn pen_test_area(ui: &mut Ui, curve: &str, t: &Tokens) {
     // Check interaction inside test box
     let resp = ui.interact(r, wid("pen-test-area", ()), Sense::click_and_drag());
     let pointer = ui.input(|i| i.pointer.clone());
+
+    // Detect stylus eraser and barrel buttons in events
+    let (is_eraser, is_barrel) = ui.input(|i| {
+        let eraser = i.events.iter().any(|e| matches!(e, egui::Event::PointerButton { button: egui::PointerButton::Extra2, .. }));
+        let barrel = i
+            .events
+            .iter()
+            .any(|e| matches!(e, egui::Event::PointerButton { button: egui::PointerButton::Extra1 | egui::PointerButton::Secondary, .. }));
+        (eraser, barrel)
+    });
 
     if resp.hovered() || resp.dragged() {
         if pointer.any_pressed()
@@ -311,7 +381,17 @@ fn pen_test_area(ui: &mut Ui, curve: &str, t: &Tokens) {
     // Paint current stroke
     for w in data.current.windows(2) {
         let width = (w[1].1 * 4.5).clamp(1.0, 6.0);
-        painter.line_segment([w[0].0, w[1].0], Stroke::new(width, t.clay));
+        let color = if is_eraser { t.text_dim } else { t.clay };
+        painter.line_segment([w[0].0, w[1].0], Stroke::new(width, color));
+    }
+
+    // Diagnostics badges at top left
+    let tip_text = if is_eraser { tw!("Eraser Tip") } else { tw!("Stylus Tip") };
+    let tip_color = if is_eraser { t.accent } else { t.text_dim };
+    text(ui, pos2(r.left() + 6.0, r.top() + 10.0), Align2::LEFT_CENTER, tip_text, mono(10.0), tip_color);
+
+    if is_barrel {
+        text(ui, pos2(r.left() + 68.0, r.top() + 10.0), Align2::LEFT_CENTER, tw!("Barrel Active"), mono(10.0), t.accent);
     }
 
     // Prompt text when empty

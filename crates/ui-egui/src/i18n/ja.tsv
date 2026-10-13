@@ -4157,4 +4157,12 @@ lighting	Light	ライト
 	Add Standard Title Block	標準標題欄を追加
 	Generate Sheet Legend Table	図版凡例表を生成
 	Set Sheet Properties	図版プロパティを設定
+	Barrel Button 1 Action	バレルボタン 1 の操作
+	Barrel Button 2 Action	バレルボタン 2 の操作
+	Context Menu	コンテキストメニュー
+	Enable Stylus Tilt and Azimuth	スタイラスの傾きと方位角を有効化
+	Hand / Pan View	手のひら / パン表示
+	Stylus Eraser Tip Inversion	スタイラス消しゴム端の反転
+	Temporary Eraser	一時的な消しゴム
+	Temporary Zoom	一時的なズーム
 

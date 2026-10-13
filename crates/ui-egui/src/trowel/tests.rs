@@ -3096,3 +3096,58 @@ fn test_j012_sheet_and_pdf_integration() {
     assert!(right_line.contains("PLATE 3"), "{}", right_line);
     assert!(right_line.contains("1호 주거지 종합도판"), "{}", right_line);
 }
+
+/// J017: Pen & Tablet stage 2 integration test (Barrel buttons, eraser inversion, tilt, palm rejection).
+#[test]
+fn test_j017_pen_tablet_stage2_integration() {
+    let mut h = Harness::new();
+    h.app.run("drawing.newPlan", json!({})).unwrap();
+    h.settle();
+
+    // 1. Open Tablet Settings modal card from canvas bar
+    let tablet_btn_id = wid("cbtn", "tablet");
+    let btn_r = h.rect(tablet_btn_id).expect("tablet settings button on canvas bar");
+    h.click_at(btn_r.center());
+    h.settle();
+
+    let card_id = wid("tablet-card", ());
+    assert!(h.rect(card_id).is_some(), "tablet settings card should be open");
+
+    // 2. Select Barrel 1 = "undo"
+    let b1_undo_id = wid("tablet-barrel", ("b1", "undo"));
+    let b1_r = h.rect(b1_undo_id).expect("barrel 1 undo segment");
+    h.click_at(b1_r.center());
+    h.settle();
+
+    // 3. Select Barrel 2 = "zoom"
+    let b2_zoom_id = wid("tablet-barrel", ("b2", "zoom"));
+    let b2_r = h.rect(b2_zoom_id).expect("barrel 2 zoom segment");
+    h.click_at(b2_r.center());
+    h.settle();
+
+    // 4. Toggle eraser invert checkbox
+    let eraser_opt_id = wid("tablet-opt", "eraser_inv");
+    let eraser_r = h.rect(eraser_opt_id).expect("eraser invert checkbox");
+    h.click_at(eraser_r.center());
+    h.settle();
+
+    // 5. Verify pen test field is rendered
+    let test_area_id = wid("pen-test-area", ());
+    assert!(h.rect(test_area_id).is_some(), "interactive pen test field present");
+
+    // 6. Click Save Settings
+    let apply_id = wid("tablet-apply", ());
+    let apply_r = h.rect(apply_id).expect("save settings button");
+    h.click_at(apply_r.center());
+    h.settle();
+
+    // 7. Verify updated preferences in app engine session
+    assert_eq!(h.app.session.prefs.pen_barrel_button_1, "undo");
+    assert_eq!(h.app.session.prefs.pen_barrel_button_2, "zoom");
+    assert!(!h.app.session.prefs.pen_eraser_invert);
+    assert!(h.app.session.prefs.pen_tilt_support);
+    assert!(h.app.session.prefs.pen_palm_rejection);
+
+    let status = h.status_line();
+    assert!(status.contains("Tablet & Pen") || status.contains("타블렛"), "{status}");
+}
