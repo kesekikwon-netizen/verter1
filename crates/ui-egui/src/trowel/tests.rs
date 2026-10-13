@@ -433,11 +433,13 @@ fn drawing_menu_sits_before_view_and_waits_for_its_jobs() {
     let at = |h: &Harness, title: &str| h.texts.iter().find(|p| p.text == title && bar.contains_rect(p.rect)).unwrap().rect.center();
     h.click_at(at(&h, "Drawing"));
     let items = h.popup_buttons();
-    // The first six run (Weights, Revert, Cut Face, Scale and Coordinate System, Make Level Lines, Tablet & Pen Settings); the others wait for their jobs.
-    assert_eq!(items.iter().take(6).filter(|(_, enabled)| *enabled).count(), 6, "the six live items: {items:?}");
-    assert!(items.iter().skip(6).all(|(_, enabled)| !enabled), "they wait for their jobs");
+    // The first seven run (Weights, Revert, Cut Face, Scale and Coordinate System, Make Level Lines, Tablet & Pen Settings, Align Underlay); the others wait for their jobs.
+    assert_eq!(items.iter().take(7).filter(|(_, enabled)| *enabled).count(), 7, "the seven live items: {items:?}");
+    assert!(items.iter().skip(7).all(|(_, enabled)| !enabled), "they wait for their jobs");
     let shown: String = h.texts.iter().map(|p| p.text.as_str()).collect::<Vec<_>>().join("|");
-    for item in ["Weights at Once…", "Make Level Lines", "Scale and Coordinate System…", "Tablet & Pen Settings…", "Send to Strata…"] {
+    for item in
+        ["Weights at Once…", "Make Level Lines", "Scale and Coordinate System…", "Tablet & Pen Settings…", "Align Underlay…", "Send to Strata…"]
+    {
         assert!(shown.contains(item), "{item} in {shown}");
     }
     // A second click puts the menu away; View, after it, is the app's own View menu.
@@ -1857,7 +1859,7 @@ fn drawing_menu_opens_the_weights_card_and_reverts() {
     };
     let items = open(&mut h);
     let enabled: Vec<bool> = items.iter().map(|(_, e)| *e).collect();
-    assert_eq!(enabled, [true, true, true, true, true, true, false, false, false, false]);
+    assert_eq!(enabled, [true, true, true, true, true, true, true, false, false, false]);
     h.click_at(h.texts.iter().find(|p| p.text == "Drawing" && bar.contains_rect(p.rect)).unwrap().rect.center());
     h.app.run("select.set", json!({ "ids": [b.0] })).unwrap();
     h.settle();
@@ -2682,4 +2684,47 @@ fn canvas_button_row_and_tablet_card() {
 
     let status = h.status_line();
     assert!(status.contains("Tablet & Pen") || status.contains("타블렛"), "{status}");
+}
+
+/// J008: Underlay alignment card opens from ribbon Align tile, toggles methods, and closes.
+#[test]
+fn underlay_align_card_opens_and_toggles() {
+    let mut h = Harness::new();
+    h.app.run("drawing.newPlan", json!({})).unwrap();
+    h.settle();
+
+    // Click the Align tile on the ribbon
+    let align_tile_id = wid("tile", "align");
+    let tile_r = h.rect(align_tile_id).expect("align tile should be present on ribbon");
+    h.click_at(tile_r.center());
+    h.settle();
+
+    // Underlay alignment card should be open
+    let card_id = wid("underlay-card", ());
+    assert!(h.rect(card_id).is_some(), "underlay alignment card should open");
+
+    // Toggle 2-Point Similarity
+    let btn_2pt_id = wid("underlay-2pt", ());
+    let r_2pt = h.rect(btn_2pt_id).expect("2-point segment button should be present");
+    h.click_at(r_2pt.center());
+    h.settle();
+    assert!(h.rect(card_id).is_some(), "card stays open in 2-point mode");
+
+    // Toggle 4-Point Affine
+    let btn_affine_id = wid("underlay-affine", ());
+    let r_aff = h.rect(btn_affine_id).expect("affine segment button should be present");
+    h.click_at(r_aff.center());
+    h.settle();
+    assert!(h.rect(card_id).is_some(), "card stays open in affine mode");
+
+    // Verify Apply button is present
+    let apply_id = wid("underlay-apply", ());
+    assert!(h.rect(apply_id).is_some(), "apply button should be present");
+
+    // Click Cancel button to close card
+    let close_id = wid("underlay-close", ());
+    let close_r = h.rect(close_id).expect("cancel button should be present");
+    h.click_at(close_r.center());
+    h.settle();
+    assert!(h.rect(card_id).is_none(), "underlay alignment card should close on cancel");
 }

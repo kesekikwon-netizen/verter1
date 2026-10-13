@@ -80,6 +80,7 @@ pub(crate) mod textwrap;
 pub(crate) mod threads;
 pub(crate) mod typecmd;
 mod typemenu;
+pub mod underlay;
 mod variablecmds;
 pub(crate) mod views;
 pub mod wand;
@@ -284,6 +285,7 @@ pub fn command_specs() -> &'static [CommandSpec] {
         v.extend(legend::specs());
         v.extend(coord::specs());
         v.extend(levellines::specs());
+        v.extend(underlay::specs());
         v
     })
 }

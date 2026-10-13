@@ -7,7 +7,7 @@ use std::cell::Cell;
 
 use serde_json::json;
 
-use super::legend::{Card, open_card, open_coord, open_tablet, revert};
+use super::legend::{Card, open_card, open_coord, open_tablet, open_underlay_align, revert};
 use super::*;
 
 /// A Drawing menu item that runs.
@@ -19,6 +19,7 @@ enum Item {
     Coord,
     LevelLines,
     Tablet,
+    AlignUnderlay,
 }
 
 pub(super) fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
@@ -80,6 +81,7 @@ pub(super) fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
                 Err(e) => app.status(e),
             },
             Some(Item::Tablet) => open_tablet(app, ui.ctx()),
+            Some(Item::AlignUnderlay) => open_underlay_align(app, ui.ctx()),
             None => {}
         }
     });
@@ -95,6 +97,7 @@ fn drawing_menu(ui: &mut Ui, open: bool, chosen: &Cell<Option<Item>>) {
         (tw!("Scale and Coordinate System…"), tw!("Set drawing scale ratio and Korean national TM coordinate system"), Item::Coord),
         (tw!("Make Level Lines"), tw!("Generate 50 cm and 10 cm elevation level lines"), Item::LevelLines),
         (tw!("Tablet & Pen Settings…"), tw!("Configure stylus sensitivity, pressure curve and tolerances"), Item::Tablet),
+        (tw!("Align Underlay…"), tw!("Align scanned drawing to real-world scale and TM coordinates using 2 or 4 GCPs"), Item::AlignUnderlay),
     ];
     for (label, tip, item) in live {
         if ui.add_enabled(open, egui::Button::new(label)).on_hover_text(tip).clicked() {
@@ -102,11 +105,8 @@ fn drawing_menu(ui: &mut Ui, open: bool, chosen: &Cell<Option<Item>>) {
             ui.close();
         }
     }
-    let groups: [&[(&str, &str)]; 3] = [
-        &[(tw!("Align Underlay…"), "J008")],
-        &[(tw!("Insert Legend Table"), "J012"), (tw!("Insert Title Block"), "J012")],
-        &[(tw!("Send to Strata…"), "J019")],
-    ];
+    let groups: [&[(&str, &str)]; 2] =
+        [&[(tw!("Insert Legend Table"), "J012"), (tw!("Insert Title Block"), "J012")], &[(tw!("Send to Strata…"), "J019")]];
     for group in groups {
         ui.separator();
         for (label, job) in group.iter() {

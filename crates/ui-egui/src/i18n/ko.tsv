@@ -4395,4 +4395,22 @@ trowel	Pen Test	펜 시험
 	Tolerances	허용치
 	Touch & Buttons	터치 및 단추
 	Windows Ink	Windows Ink
+trowel	2-Point Similarity	2점 상사 정합
+trowel	2-Point Similarity (Rotation · Scale)	2점 정합 (회전·축척)
+trowel	4-Point Affine	4점 아핀 정합
+trowel	4-Point Affine (Distortion Correction)	4점 아핀 정합 (왜곡 보정)
+trowel	Align scanned drawing to real-world scale and TM coordinates	스캔 실측도를 실제 축척 및 국가 TM 좌표계에 맞춤
+trowel	Align scanned drawing to real-world scale and TM coordinates using 2 or 4 GCPs	2점 또는 4점 기준점(GCP)을 매칭하여 스캔 실측도를 국가 TM 좌표계 및 실제 축척에 맞춥니다
+trowel	Apply Alignment	밑그림 정합 실행
+trowel	Error Analysis	종합 오차 분석
+trowel	GCP	기준점 (GCP)
+trowel	Residual	잔차 오차
+trowel	Scan (px)	스캔 좌표 (px)
+trowel	Scanned Underlay	스캔 밑그림
+trowel	Target TM (m)	국가 TM 좌표 (m)
+trowel	Underlay Alignment	밑그림 맞추기
+trowel	Underlay aligned: RMSE {rmse:.2} mm (exceeds tolerance)	밑그림 정합 완료: RMSE {rmse:.2} mm (허용치 초과)
+trowel	Underlay aligned: RMSE {rmse:.2} mm (within tolerance)	밑그림 정합 완료: RMSE {rmse:.2} mm (허용치 만족)
+	Align Scanned Underlay	밑그림 정합
+	Estimate Underlay Alignment	밑그림 정합 오차 추정
 

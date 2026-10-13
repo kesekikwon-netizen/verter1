@@ -28,6 +28,7 @@ mod rowedit;
 mod status;
 pub(crate) mod tablet_card;
 mod tools;
+pub(crate) mod underlay_card;
 mod weights;
 
 /// The panels' ids (egui keeps where each was laid out under it).

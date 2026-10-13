@@ -3754,3 +3754,6 @@ lighting	Light	光源
 	Tolerances	容差
 	Touch & Buttons	触控与按钮
 	Windows Ink	Windows Ink
+	Align Scanned Underlay	对齐扫描底图
+	Estimate Underlay Alignment	估计底图对齐误差
+

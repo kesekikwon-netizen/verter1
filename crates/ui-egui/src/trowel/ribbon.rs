@@ -23,6 +23,8 @@ enum Act {
     Tool(&'static str),
     /// The underlay: show or hide the template layers, or place a scan as one.
     Underlay,
+    /// Align scanned underlay with 2 or 4 GCPs.
+    Align,
     /// Comes with a later job.
     Soon(&'static str),
 }
@@ -69,7 +71,7 @@ fn groups() -> [(&'static str, Vec<Tile>); 7] {
                 tile("sheet", "tw-sheet", tw!("Plate"), Cmd("drawing.newSheet")),
             ],
         ),
-        (tw!("Underlay"), vec![tile("align", "tw-align", tw!("Align"), Soon("J008")), tile("underlay", "tw-underlay", tw!("Underlay"), Underlay)]),
+        (tw!("Underlay"), vec![tile("align", "tw-align", tw!("Align"), Align), tile("underlay", "tw-underlay", tw!("Underlay"), Underlay)]),
         (
             tw!("Draw"),
             vec![
@@ -107,6 +109,13 @@ fn groups() -> [(&'static str, Vec<Tile>); 7] {
 fn look(app: &VectorcraftApp, act: Act) -> Look {
     match act {
         Act::Soon(_) => Look::Off,
+        Act::Align => {
+            if app.session.active().is_some() {
+                Look::Rest
+            } else {
+                Look::Off
+            }
+        }
         Act::Underlay => match templates(app) {
             (ids, true) if !ids.is_empty() => Look::Shown,
             (ids, _) if !ids.is_empty() => Look::Rest,
@@ -185,6 +194,7 @@ pub(super) fn show(app: &mut VectorcraftApp, ui: &mut Ui) {
             Some(Act::Cmd(id)) => crate::menus::invoke(app, id, json!({})),
             Some(Act::Tool(id)) => app.select_tool(id),
             Some(Act::Underlay) => underlay(app),
+            Some(Act::Align) => super::legend::open_underlay_align(app, ui.ctx()),
             Some(Act::Soon(_)) | None => {}
         }
     });
@@ -289,6 +299,7 @@ fn tile_ui(app: &VectorcraftApp, ui: &Ui, tile: &Tile, rect: Rect, t: &Tokens) -
     ui.painter().with_clip_rect(rect.expand2(vec2(3.0, 0.0))).text(label, Align2::CENTER_CENTER, tile.label, label_font, label_color);
     let tip = match tile.act {
         Act::Soon(job) => soon(tile.label, job),
+        Act::Align => tw!("Align scanned drawing to real-world scale and TM coordinates").to_string(),
         Act::Underlay if templates(app).0.is_empty() => tw!("Place a scan under the drawing").to_string(),
         Act::Underlay => tw!("Show or hide the underlay").to_string(),
         Act::Tool(id) => vectorcraft_tools::tool_info(id).map(crate::toolbar::tip).unwrap_or_default(),
