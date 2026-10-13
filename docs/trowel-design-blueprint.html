@@ -1,0 +1,1355 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trowel (verter1) — 최종 목표 완성 디자인 설계도</title>
+  <style>
+    :root {
+      --bg-plate: #141413;
+      --bg-panel: #1b1b19;
+      --bg-card: #232320;
+      --bg-card-hover: #2c2c28;
+      --bg-active: #383832;
+      --border: #33332d;
+      --border-light: #44443c;
+      --clay: #d97757;
+      --clay-hover: #e58767;
+      --clay-wash: rgba(217, 119, 87, 0.15);
+      --oat: #eadbb6;
+      --oat-text: #1a1a18;
+      --caution: #d9c27a;
+      --caution-wash: rgba(217, 194, 122, 0.15);
+      --text-main: #f5f5f0;
+      --text-sub: #a8a8a0;
+      --text-muted: #6e6e66;
+      --font-ui: -apple-system, BlinkMacSystemFont, "Pretendard", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #0b0b0a;
+      color: var(--text-main);
+      font-family: var(--font-ui);
+      line-height: 1.5;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    header.meta-header {
+      width: 1600px;
+      max-width: 100%;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--bg-plate);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 24px;
+    }
+
+    .meta-title h1 {
+      font-size: 20px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--text-main);
+    }
+    .badge-trowel {
+      background: var(--clay);
+      color: #fff;
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .meta-title p {
+      font-size: 13px;
+      color: var(--text-sub);
+      margin-top: 4px;
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 8px;
+    }
+    .nav-tab {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-sub);
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.15s ease;
+    }
+    .nav-tab:hover {
+      background: var(--bg-card-hover);
+      color: var(--text-main);
+    }
+    .nav-tab.active {
+      background: var(--clay);
+      border-color: var(--clay);
+      color: #fff;
+    }
+
+    /* Main App Mockup Container (1600 x 988 Exact Spec) */
+    .app-viewport {
+      width: 1600px;
+      height: 988px;
+      background: var(--bg-plate);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.05);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Caption Bar (32px) */
+    .caption-bar {
+      height: 32px;
+      background: #10100f;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      font-size: 12px;
+      user-select: none;
+    }
+    .caption-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-sub);
+    }
+    .caption-icon {
+      width: 16px;
+      height: 16px;
+      background: var(--clay);
+      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: bold;
+      font-size: 10px;
+    }
+    .caption-title {
+      color: var(--text-main);
+      font-weight: 500;
+    }
+    .window-controls {
+      display: flex;
+      gap: 8px;
+    }
+    .win-btn {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #333;
+      display: inline-block;
+    }
+    .win-close { background: #e05244; }
+    .win-min { background: #e5b338; }
+    .win-max { background: #38b750; }
+
+    /* Menu Bar (28px) */
+    .menu-bar {
+      height: 28px;
+      background: #141413;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 8px;
+      gap: 4px;
+      font-size: 12px;
+      user-select: none;
+    }
+    .menu-item {
+      padding: 3px 10px;
+      border-radius: 4px;
+      color: var(--text-sub);
+      cursor: pointer;
+    }
+    .menu-item:hover { background: var(--bg-card); color: var(--text-main); }
+    .menu-item.archaeology-menu {
+      color: var(--clay);
+      font-weight: 600;
+      border-bottom: 2px solid var(--clay);
+      border-radius: 4px 4px 0 0;
+    }
+
+    /* Ribbon Bar (96px) */
+    .ribbon-bar {
+      height: 96px;
+      background: #181816;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: stretch;
+      padding: 6px 12px;
+      gap: 8px;
+      overflow-x: auto;
+    }
+    .ribbon-group {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border-right: 1px solid #282824;
+      padding-right: 8px;
+      margin-right: 4px;
+    }
+    .ribbon-group:last-child { border-right: none; }
+    .ribbon-tiles {
+      display: flex;
+      gap: 4px;
+    }
+    .ribbon-tile {
+      width: 52px;
+      height: 64px;
+      background: var(--bg-card);
+      border: 1px solid transparent;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      cursor: pointer;
+      padding: 4px;
+      transition: all 0.1s;
+    }
+    .ribbon-tile:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--border-light);
+    }
+    .ribbon-tile.active {
+      background: var(--clay-wash);
+      border-color: var(--clay);
+    }
+    .ribbon-tile.active .tile-icon { color: var(--clay); }
+    .ribbon-tile.active .tile-label { color: #fff; font-weight: 600; }
+    .tile-icon {
+      font-size: 18px;
+      color: var(--text-sub);
+    }
+    .tile-label {
+      font-size: 10px;
+      color: var(--text-sub);
+      text-align: center;
+      white-space: nowrap;
+    }
+    .ribbon-group-title {
+      font-size: 10px;
+      color: var(--text-muted);
+      text-align: center;
+      font-weight: 500;
+    }
+
+    /* Control Bar (40px) */
+    .control-bar {
+      height: 40px;
+      background: #1c1c1a;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      font-size: 12px;
+    }
+    .control-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .tool-breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+    .legend-chip {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      padding: 4px 10px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+    .chip-swatch {
+      width: 12px;
+      height: 12px;
+      border-radius: 2px;
+      background: #d97757;
+    }
+    .control-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .snap-toggle {
+      background: var(--bg-active);
+      color: var(--text-main);
+      padding: 4px 10px;
+      border-radius: 4px;
+      border: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+    }
+
+    /* Workspace Body (Tools + DrawingSet + Canvas + RightCol) */
+    .workspace-body {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* Tool Column (56px) */
+    .tool-column {
+      width: 56px;
+      background: #161614;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 8px 0;
+      gap: 4px;
+    }
+    .tool-btn {
+      width: 40px;
+      height: 28px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-sub);
+      font-size: 14px;
+      position: relative;
+    }
+    .tool-btn:hover { background: var(--bg-card); color: var(--text-main); }
+    .tool-btn.active {
+      background: var(--clay);
+      color: #fff;
+    }
+    .tool-shortcut {
+      position: absolute;
+      bottom: 2px;
+      right: 3px;
+      font-size: 8px;
+      color: var(--text-muted);
+    }
+    .tool-btn.active .tool-shortcut { color: rgba(255,255,255,0.7); }
+    .tool-divider {
+      width: 32px;
+      height: 1px;
+      background: var(--border);
+      margin: 4px 0;
+    }
+    .arch-label {
+      font-size: 8px;
+      color: var(--clay);
+      font-weight: 700;
+      margin-top: 4px;
+      text-transform: uppercase;
+    }
+
+    /* Drawing Set Column (216px) */
+    .drawing-set {
+      width: 216px;
+      background: #181816;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      font-size: 12px;
+    }
+    .panel-header {
+      height: 36px;
+      padding: 0 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      font-weight: 600;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+    }
+    .drawing-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .drawing-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      color: var(--text-sub);
+      transition: background 0.1s;
+    }
+    .drawing-item:hover { background: var(--bg-card); color: var(--text-main); }
+    .drawing-item.active {
+      background: #2a2822;
+      border: 1px solid var(--clay);
+      color: var(--text-main);
+      font-weight: 600;
+    }
+    .drawing-item .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--clay);
+    }
+    .drawing-footer {
+      padding: 10px 12px;
+      border-top: 1px solid var(--border);
+      font-size: 11px;
+      color: var(--text-muted);
+      background: #141413;
+    }
+
+    /* Main Canvas Area (Flex 1, approx 1024 x 728) */
+    .canvas-viewport {
+      flex: 1;
+      background: #111110;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Canvas Tabs (32px) */
+    .canvas-tabs {
+      height: 32px;
+      background: #161614;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 8px;
+      gap: 4px;
+    }
+    .c-tab {
+      padding: 4px 12px;
+      font-size: 12px;
+      color: var(--text-sub);
+      border-radius: 4px 4px 0 0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .c-tab.active {
+      background: #111110;
+      color: var(--text-main);
+      font-weight: 500;
+      border: 1px solid var(--border);
+      border-bottom: 1px solid #111110;
+    }
+
+    .canvas-content {
+      flex: 1;
+      position: relative;
+      background-image: 
+        radial-gradient(circle, #252522 1px, transparent 1px);
+      background-size: 24px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Canvas Overlays */
+    .canvas-tool-badge {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      background: rgba(26, 26, 24, 0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border-light);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-main);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .canvas-zoom-widget {
+      position: absolute;
+      bottom: 16px;
+      right: 16px;
+      background: rgba(26, 26, 24, 0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border-light);
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-sub);
+    }
+    .zoom-btn {
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .zoom-btn:hover { background: var(--bg-card); color: var(--text-main); }
+
+    /* SVG Architectural Drawing Artboard */
+    .artboard-svg {
+      width: 720px;
+      height: 520px;
+      background: #181816;
+      border: 1px solid #383832;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    /* Right Column (304px - Palette + Legend + Props) */
+    .right-column {
+      width: 304px;
+      background: #181816;
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+    .right-section {
+      border-bottom: 1px solid var(--border);
+      padding: 12px;
+    }
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Palette: Weight Ladder Chips */
+    .weight-ladder {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 4px;
+      margin-bottom: 12px;
+    }
+    .weight-chip {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 0;
+      text-align: center;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      cursor: pointer;
+      color: var(--text-sub);
+    }
+    .weight-chip:hover { border-color: var(--border-light); color: var(--text-main); }
+    .weight-chip.active {
+      background: var(--clay);
+      border-color: var(--clay);
+      color: #fff;
+      font-weight: 700;
+    }
+
+    /* Hatch Buttons */
+    .hatch-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+    .hatch-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 4px;
+      font-size: 10px;
+      text-align: center;
+      cursor: pointer;
+      color: var(--text-sub);
+    }
+    .hatch-btn.active {
+      background: var(--clay-wash);
+      border-color: var(--clay);
+      color: var(--clay);
+      font-weight: 600;
+    }
+    .cut-face-btn {
+      width: 100%;
+      background: #2a241f;
+      border: 1px solid var(--clay);
+      color: var(--clay);
+      padding: 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .cut-face-btn:hover { background: #352c25; }
+
+    /* Legend / Layer List */
+    .legend-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      margin-bottom: 10px;
+    }
+    .legend-row {
+      display: flex;
+      align-items: center;
+      padding: 6px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      gap: 8px;
+      cursor: pointer;
+      color: var(--text-sub);
+    }
+    .legend-row:hover { background: var(--bg-card); color: var(--text-main); }
+    .legend-row.selected {
+      background: var(--oat);
+      color: var(--oat-text);
+      font-weight: 600;
+    }
+    .legend-icons {
+      display: flex;
+      gap: 6px;
+      color: var(--text-muted);
+    }
+    .legend-row.selected .legend-icons { color: #555; }
+    .legend-star { color: var(--clay); }
+    .legend-name { flex: 1; }
+    .legend-spec {
+      font-family: var(--font-mono);
+      font-size: 11px;
+    }
+    .badge-override {
+      background: var(--caution-wash);
+      color: var(--caution);
+      border: 1px solid rgba(217, 194, 122, 0.4);
+      font-size: 9px;
+      padding: 1px 4px;
+      border-radius: 3px;
+      font-weight: 600;
+    }
+
+    .batch-weights-btn {
+      width: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-sub);
+      padding: 6px;
+      border-radius: 4px;
+      font-size: 11px;
+      cursor: pointer;
+      text-align: center;
+    }
+    .batch-weights-btn:hover { background: var(--bg-card-hover); color: var(--text-main); }
+
+    /* Status Bar (32px) */
+    .status-bar {
+      height: 32px;
+      background: #10100f;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      font-size: 11px;
+      color: var(--text-sub);
+      font-family: var(--font-mono);
+    }
+    .status-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-family: var(--font-ui);
+    }
+    .status-right {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .status-tm { color: var(--clay); font-weight: 500; }
+
+    /* Modal Simulation (Weights Card) */
+    .weights-modal-overlay {
+      position: absolute;
+      top: 210px;
+      right: 320px;
+      width: 340px;
+      background: #1c1c19;
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.7);
+      padding: 16px;
+      z-index: 100;
+      display: none;
+    }
+    .modal-header {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* Content Pages for other tabs */
+    .doc-page {
+      width: 1600px;
+      background: var(--bg-plate);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 40px;
+      display: none;
+    }
+    .doc-page h2 {
+      color: var(--clay);
+      margin-bottom: 16px;
+      font-size: 22px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+    .doc-page p, .doc-page li {
+      color: var(--text-sub);
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin: 20px 0;
+    }
+    .card-doc {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+    }
+    .card-doc h3 {
+      font-size: 16px;
+      color: var(--text-main);
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Metadata Header -->
+  <header class="meta-header">
+    <div class="meta-title">
+      <h1>
+        <span class="badge-trowel">Trowel CAD</span>
+        고고학 발굴 실측 전문 벡터 CAD 시스템 목표 완성 설계도
+      </h1>
+      <p>어도비 일러스트레이터 대체 · 한국 고고학 실측도 표준 규격(Design 2.1) · 1600 × 988 네이티브 아키텍처</p>
+    </div>
+    <div class="nav-tabs">
+      <button class="nav-tab active" onclick="switchTab('mockup')">🖥️ UI/UX 실측 화면 청사진</button>
+      <button class="nav-tab" onclick="switchTab('architecture')">⚙️ 시스템 계층 구조</button>
+      <button class="nav-tab" onclick="switchTab('roadmap')">📋 백로그 완성 로드맵</button>
+      <button class="nav-tab" onclick="switchTab('superpowers')">🛠️ 슈퍼파워 & 개발 환경</button>
+    </div>
+  </header>
+
+  <!-- TAB 1: Live Interactive Mockup (1600 x 988) -->
+  <main id="tab-mockup" class="app-viewport">
+    
+    <!-- 1. Caption Bar (32px) -->
+    <div class="caption-bar">
+      <div class="caption-left">
+        <div class="caption-icon">⛏</div>
+        <span class="caption-title">1호주거지_평면도.vectorcraft * — Trowel</span>
+        <span style="color: var(--clay); font-size: 10px;">[저장 안 됨]</span>
+      </div>
+      <div class="window-controls">
+        <span class="win-btn win-min"></span>
+        <span class="win-btn win-max"></span>
+        <span class="win-btn win-close"></span>
+      </div>
+    </div>
+
+    <!-- 2. Menu Bar (28px) -->
+    <div class="menu-bar">
+      <span class="menu-item">파일 (F)</span>
+      <span class="menu-item">편집 (E)</span>
+      <span class="menu-item">오브젝트 (O)</span>
+      <span class="menu-item">문자 (T)</span>
+      <span class="menu-item">선택 (S)</span>
+      <span class="menu-item">효과 (C)</span>
+      <span class="menu-item archaeology-menu">도면 (D)</span>
+      <span class="menu-item">보기 (V)</span>
+      <span class="menu-item">창 (W)</span>
+      <span class="menu-item">도움말 (H)</span>
+    </div>
+
+    <!-- 3. Ribbon Bar (96px) -->
+    <div class="ribbon-bar">
+      <!-- File Group -->
+      <div class="ribbon-group">
+        <div class="ribbon-tiles">
+          <div class="ribbon-tile"><span class="tile-icon">📂</span><span class="tile-label">열기</span></div>
+          <div class="ribbon-tile active"><span class="tile-icon">💾</span><span class="tile-label">저장</span></div>
+          <div class="ribbon-tile"><span class="tile-icon">📥</span><span class="tile-label">가져오기</span></div>
+        </div>
+        <span class="ribbon-group-title">파일</span>
+      </div>
+      <!-- New Drawing Group -->
+      <div class="ribbon-group">
+        <div class="ribbon-tiles">
+          <div class="ribbon-tile active"><span class="tile-icon">🗺️</span><span class="tile-label">평면</span></div>
+          <div class="ribbon-tile"><span class="tile-icon">📐</span><span class="tile-label">단면</span></div>
+          <div class="ribbon-tile"><span class="tile-icon">🏺</span><span class="tile-label">유물</span></div>
+          <div class="ribbon-tile"><span class="tile-icon">📑</span><span class="tile-label">도판</span></div>
+        </div>
+        <span class="ribbon-group-title">새 도면 견본</span>
+      </div>
+      <!-- Underlay Group -->
+      <div class="ribbon-group">
+        <div class="ribbon-tiles">
+          <div class="ribbon-tile"><span class="tile-icon">🎯</span><span class="tile-label">맞추기</span></div>
+          <div class="ribbon-tile"><span class="tile-icon">🖼️</span><span class="tile-label">밑그림</span></div>
+        </div>
+        <span class="ribbon-group-title">스캔 밑그림</span>
+      </div>
+      <!-- Drawing Tools Group -->
+      <div class="ribbon-group">
+        <div class="ribbon-tiles">
+          <div class="ribbon-tile active"><span class="tile-icon">✒️</span><span class="tile-label">펜</span></div>
+          <div class="ribbon-tile"><span class="tile-icon">✏️</span><span class="tile-label">연필</span></div>
+          <div class="ribbon-tile"><span class="tile-icon">🪣</span><span class="tile-label">칠통</span></div>
+          <div class="ribbon-tile"><span class="tile-icon">✂️</span><span class="tile-label">단면선</span></div>
+          <div class="ribbon-tile"><span class="tile-icon">🚩</span><span class="tile-label">표고</span></div>
+        </div>
+        <span class="ribbon-group-title">그리기 도구</span>
+      </div>
+      <!-- Elements Group -->
+      <div class="ribbon-group">
+        <div class="ribbon-tiles">
+          <div class="ribbon-tile"><span class="tile-icon">🧭</span><span class="tile-label">방위</span></div>
+          <div class="ribbon-tile"><span class="tile-icon">📏</span><span class="tile-label">축척막대</span></div>
+          <div class="ribbon-tile"><span class="tile-icon">📋</span><span class="tile-label">범례표</span></div>
+          <div class="ribbon-tile"><span class="tile-icon">🏷️</span><span class="tile-label">표제란</span></div>
+        </div>
+        <span class="ribbon-group-title">도면 요소</span>
+      </div>
+      <!-- View Group -->
+      <div class="ribbon-group">
+        <div class="ribbon-tiles">
+          <div class="ribbon-tile active"><span class="tile-icon">▦</span><span class="tile-label">격자</span></div>
+          <div class="ribbon-tile active"><span class="tile-icon">🧲</span><span class="tile-label">자석스냅</span></div>
+        </div>
+        <span class="ribbon-group-title">보기</span>
+      </div>
+      <!-- Export Group -->
+      <div class="ribbon-group">
+        <div class="ribbon-tiles">
+          <div class="ribbon-tile"><span class="tile-icon">📄</span><span class="tile-label">PDF</span></div>
+          <div class="ribbon-tile"><span class="tile-icon">📐</span><span class="tile-label">DXF</span></div>
+          <div class="ribbon-tile"><span class="tile-icon">🌐</span><span class="tile-label">Strata</span></div>
+        </div>
+        <span class="ribbon-group-title">내보내기</span>
+      </div>
+    </div>
+
+    <!-- 4. Control Bar (40px) -->
+    <div class="control-bar">
+      <div class="control-left">
+        <div class="tool-breadcrumb">
+          <span>펜 도구</span>
+          <span style="color: var(--text-muted);">›</span>
+        </div>
+        <div class="legend-chip">
+          <div class="chip-swatch"></div>
+          <span>굴광선 (유구 면)</span>
+          <span style="font-family: var(--font-mono); color: var(--clay); font-weight: 600;">0.8 pt</span>
+          <span style="font-size: 10px; color: var(--text-muted);">▾</span>
+        </div>
+        <span style="color: var(--text-muted); font-size: 11px;">※ 굵기 · 빗금 · 선종은 오른쪽 「그리기 팔레트」에서 지정</span>
+      </div>
+      <div class="control-right">
+        <div class="snap-toggle">
+          <span>🧲 자석 스냅 켬</span>
+          <span style="font-family: var(--font-mono); color: var(--clay);">공차 8 px</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. Workspace Body -->
+    <div class="workspace-body">
+      
+      <!-- Left Tool Column (56px) -->
+      <aside class="tool-column">
+        <div class="tool-btn"><span class="tool-icon">↖</span><span class="tool-shortcut">V</span></div>
+        <div class="tool-btn"><span class="tool-icon">⇱</span><span class="tool-shortcut">A</span></div>
+        <div class="tool-divider"></div>
+        <div class="tool-btn active"><span class="tool-icon">✒</span><span class="tool-shortcut">P</span></div>
+        <div class="tool-btn"><span class="tool-icon">✏</span><span class="tool-shortcut">N</span></div>
+        <div class="tool-btn"><span class="tool-icon">\</span><span class="tool-shortcut">\</span></div>
+        <div class="tool-btn"><span class="tool-icon">□</span><span class="tool-shortcut">M</span></div>
+        <div class="tool-btn"><span class="tool-icon">T</span><span class="tool-shortcut">T</span></div>
+        <div class="tool-divider"></div>
+        <div class="tool-btn"><span class="tool-icon">↻</span><span class="tool-shortcut">R</span></div>
+        <div class="tool-btn"><span class="tool-icon">✂</span><span class="tool-shortcut">C</span></div>
+        <div class="tool-btn"><span class="tool-icon">🪣</span><span class="tool-shortcut">K</span></div>
+        <div class="tool-btn"><span class="tool-icon">🔍</span><span class="tool-shortcut">Z</span></div>
+        <div class="tool-divider"></div>
+        <span class="arch-label">고고학</span>
+        <div class="tool-btn" title="단면선 (⇧A)"><span class="tool-icon">✁</span><span class="tool-shortcut">A</span></div>
+        <div class="tool-btn" title="표고 EL (⇧Z)"><span class="tool-icon">⚑</span><span class="tool-shortcut">Z</span></div>
+        <div class="tool-btn" title="유물 번호"><span class="tool-icon">①</span></div>
+        <div class="tool-btn" title="주혈 깊이"><span class="tool-icon">▼</span></div>
+        <div class="tool-btn" title="경사 표시"><span class="tool-icon">▲</span></div>
+      </aside>
+
+      <!-- Drawing Set (216px) -->
+      <aside class="drawing-set">
+        <div class="panel-header">
+          <span>도면집</span>
+          <span style="cursor: pointer; color: var(--clay);">＋</span>
+        </div>
+        <div class="drawing-list">
+          <div class="drawing-item active">
+            <span class="dot"></span>
+            <span>1호주거지 평면</span>
+          </div>
+          <div class="drawing-item">
+            <span style="width: 6px;"></span>
+            <span>1호주거지 A-A' 단면</span>
+          </div>
+          <div class="drawing-item">
+            <span style="width: 6px;"></span>
+            <span>출토 적갈색토기 실측</span>
+          </div>
+          <div class="drawing-item">
+            <span style="width: 6px;"></span>
+            <span>도판 1 (유구배치도)</span>
+          </div>
+        </div>
+        <div class="drawing-footer">
+          <div>축척: <strong>1:10</strong> (대지 1000 × 700 mm)</div>
+          <div style="margin-top: 4px; color: var(--clay);">EPSG:5186 (중부원점 TM)</div>
+        </div>
+      </aside>
+
+      <!-- Main Canvas Viewport (1024 x 728 approx) -->
+      <section class="canvas-viewport">
+        <!-- Canvas Tabs (32px) -->
+        <div class="canvas-tabs">
+          <div class="c-tab active">
+            <span>1호주거지_평면도.vectorcraft *</span>
+            <span style="font-size: 10px; color: var(--text-muted); margin-left: 4px;">✕</span>
+          </div>
+          <div class="c-tab">
+            <span>단면도.vectorcraft</span>
+          </div>
+        </div>
+
+        <div class="canvas-content">
+          <!-- Canvas Overlay Badges -->
+          <div class="canvas-tool-badge">
+            <span style="color: var(--clay);">✒ 펜 도구</span>
+            <span style="color: var(--border-light);">|</span>
+            <span>현재: 굴광선 (0.8 pt)</span>
+          </div>
+          <div class="canvas-zoom-widget">
+            <span class="zoom-btn">－</span>
+            <span style="color: var(--text-main); font-weight: 600;">100%</span>
+            <span class="zoom-btn">＋</span>
+            <span class="zoom-btn" style="color: var(--clay);">맞춤</span>
+          </div>
+
+          <!-- Live SVG Architectural Illustration -->
+          <svg class="artboard-svg" viewBox="0 0 720 520">
+            <!-- Grid Lines -->
+            <defs>
+              <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#222220" stroke-width="0.5"/>
+              </pattern>
+              <!-- 45 Deg Hatch Pattern -->
+              <pattern id="hatch45" width="10" height="10" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
+                <line x1="0" y1="0" x2="0" y2="10" stroke="#d97757" stroke-width="0.5" stroke-opacity="0.6" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#grid)" />
+
+            <!-- Underlay Scan Simulation (Scanned Plan Groundwork) -->
+            <rect x="80" y="60" width="560" height="400" fill="none" stroke="#2c2c28" stroke-dasharray="2,2" />
+            <text x="90" y="80" fill="#44443e" font-size="10" font-family="sans-serif">밑그림: 광령리1호_실측스캔.png (잠김)</text>
+
+            <!-- Prehistoric Pit House Outline (굴광선: 0.8pt + 빗금 0.1pt) -->
+            <polygon points="160,140 540,120 560,400 140,420" 
+                     fill="url(#hatch45)" 
+                     stroke="#d97757" 
+                     stroke-width="2.5" 
+                     stroke-linejoin="round" />
+
+            <!-- Inner Post Holes (주혈들) -->
+            <circle cx="220" cy="190" r="16" fill="#1b1b19" stroke="#d97757" stroke-width="1.2" />
+            <text x="214" y="194" fill="#a8a8a0" font-size="10" font-family="monospace">P1</text>
+
+            <circle cx="480" cy="180" r="16" fill="#1b1b19" stroke="#d97757" stroke-width="1.2" />
+            <text x="474" y="184" fill="#a8a8a0" font-size="10" font-family="monospace">P2</text>
+
+            <circle cx="490" cy="340" r="16" fill="#1b1b19" stroke="#d97757" stroke-width="1.2" />
+            <text x="484" y="344" fill="#a8a8a0" font-size="10" font-family="monospace">P3</text>
+
+            <circle cx="210" cy="360" r="16" fill="#1b1b19" stroke="#d97757" stroke-width="1.2" />
+            <text x="204" y="364" fill="#a8a8a0" font-size="10" font-family="monospace">P4</text>
+
+            <!-- Hearth (노지) -->
+            <rect x="320" y="240" width="80" height="60" rx="10" fill="#252521" stroke="#eadbb6" stroke-width="1.5" />
+            <text x="345" y="275" fill="#eadbb6" font-size="11" font-weight="bold">노지</text>
+
+            <!-- Section Line A-A' (단면 위치선) -->
+            <line x1="90" y1="270" x2="610" y2="270" stroke="#f5f5f0" stroke-width="1.2" stroke-dasharray="12,4,2,4" />
+            <!-- Arrowheads and labels -->
+            <polygon points="90,265 80,270 90,275" fill="#f5f5f0" />
+            <text x="65" y="274" fill="#f5f5f0" font-size="14" font-weight="bold">A</text>
+            <polygon points="610,265 620,270 610,275" fill="#f5f5f0" />
+            <text x="625" y="274" fill="#f5f5f0" font-size="14" font-weight="bold">A'</text>
+
+            <!-- Elevation Datum Flag (표고 기호 EL 152.48m) -->
+            <g transform="translate(180, 110)">
+              <polygon points="0,0 20,-10 20,10" fill="#d97757" />
+              <line x1="0" y1="0" x2="0" y2="25" stroke="#d97757" stroke-width="1.5" />
+              <text x="26" y="5" fill="#f5f5f0" font-size="11" font-family="monospace" font-weight="bold">EL 152.48m</text>
+            </g>
+
+            <!-- Compass North Arrow (방위표) -->
+            <g transform="translate(630, 100)">
+              <circle cx="0" cy="0" r="22" fill="#1b1b19" stroke="#383832" stroke-width="1"/>
+              <polygon points="0,-18 6,14 0,8 -6,14" fill="#d97757" />
+              <text x="-4" y="-24" fill="#f5f5f0" font-size="11" font-weight="bold">N</text>
+            </g>
+
+            <!-- Scale Bar (축척 막대 1:10) -->
+            <g transform="translate(100, 480)">
+              <rect x="0" y="0" width="100" height="4" fill="#f5f5f0" />
+              <rect x="100" y="0" width="100" height="4" fill="#d97757" />
+              <text x="0" y="-4" fill="#a8a8a0" font-size="10" font-family="monospace">0</text>
+              <text x="95" y="-4" fill="#a8a8a0" font-size="10" font-family="monospace">1m</text>
+              <text x="190" y="-4" fill="#a8a8a0" font-size="10" font-family="monospace">2m</text>
+              <text x="220" y="2" fill="#f5f5f0" font-size="11" font-weight="bold">축척 1:10</text>
+            </g>
+          </svg>
+        </div>
+      </section>
+
+      <!-- Right Column (304px - Drawing Palette + Legend/Layers + Properties) -->
+      <aside class="right-column">
+        
+        <!-- 1. Drawing Palette Section -->
+        <div class="right-section">
+          <div class="section-title">
+            <span>그리기 팔레트 (Palette)</span>
+            <span style="color: var(--clay); font-size: 10px;">J014</span>
+          </div>
+          
+          <div style="font-size: 11px; color: var(--text-sub); margin-bottom: 6px;">선 굵기 사다리 (pt)</div>
+          <div class="weight-ladder">
+            <div class="weight-chip">0.1</div>
+            <div class="weight-chip">0.2</div>
+            <div class="weight-chip">0.3</div>
+            <div class="weight-chip">0.5</div>
+            <div class="weight-chip active">0.8</div>
+            <div class="weight-chip">1.0</div>
+          </div>
+
+          <div style="font-size: 11px; color: var(--text-sub); margin-bottom: 6px;">빗금(해치) 패턴</div>
+          <div class="hatch-grid">
+            <div class="hatch-btn active">45°</div>
+            <div class="hatch-btn">135°</div>
+            <div class="hatch-btn">교차</div>
+            <div class="hatch-btn">없음</div>
+          </div>
+
+          <button class="cut-face-btn" onclick="toggleWeightsModal()">
+            <span>⚡ 잘린 면 적용 (0.8pt + 0.1pt 빗금)</span>
+          </button>
+        </div>
+
+        <!-- 2. Legend & Layers Section (J005 완료) -->
+        <div class="right-section">
+          <div class="section-title">
+            <span>범례 · 레이어 (Layers)</span>
+            <span style="color: var(--clay); cursor: pointer;" onclick="toggleWeightsModal()">모든 굵기 ⚙️</span>
+          </div>
+
+          <div class="legend-list">
+            <!-- Row 1: Selected Row -->
+            <div class="legend-row selected">
+              <div class="legend-icons"><span>👁</span><span>🔒</span><span class="legend-star">★</span></div>
+              <span class="legend-name">굴광선 (유구 면)</span>
+              <span class="legend-spec">0.8 pt</span>
+            </div>
+            <!-- Row 2 -->
+            <div class="legend-row">
+              <div class="legend-icons"><span>👁</span><span>🔒</span><span class="legend-star">★</span></div>
+              <span class="legend-name">단면 위치선</span>
+              <span class="badge-override">따로 1</span>
+              <span class="legend-spec">0.5 pt</span>
+            </div>
+            <!-- Row 3 -->
+            <div class="legend-row">
+              <div class="legend-icons"><span>👁</span><span>🔒</span><span>★</span></div>
+              <span class="legend-name">기둥자리 (주혈)</span>
+              <span class="legend-spec">0.3 pt</span>
+            </div>
+            <!-- Row 4 -->
+            <div class="legend-row">
+              <div class="legend-icons"><span>👁</span><span>🔒</span><span>☆</span></div>
+              <span class="legend-name">노지 경계</span>
+              <span class="legend-spec">0.5 pt</span>
+            </div>
+            <!-- Row 5 -->
+            <div class="legend-row">
+              <div class="legend-icons"><span>👁</span><span>🔒</span><span>☆</span></div>
+              <span class="legend-name">조사구역 경계</span>
+              <span class="legend-spec">1.0 pt</span>
+            </div>
+            <!-- Row 6 (Locked Template) -->
+            <div class="legend-row" style="color: var(--text-muted);">
+              <div class="legend-icons"><span>👁</span><span>🔒</span></div>
+              <span class="legend-name">밑그림 스캔본</span>
+              <span class="legend-spec">스캔</span>
+            </div>
+          </div>
+
+          <button class="batch-weights-btn" onclick="toggleWeightsModal()">
+            <span>📐 축척에 맞추어 모든 굵기 일괄 변환…</span>
+          </button>
+        </div>
+
+        <!-- 3. Properties Panel -->
+        <div class="right-section" style="border-bottom: none; flex: 1;">
+          <div class="section-title">
+            <span>선택 속성 (Properties)</span>
+            <span style="color: var(--text-muted);">1개 선택</span>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12px;">
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: var(--text-muted);">유구 종류:</span>
+              <span style="font-weight: 600;">수혈주거지 (1호)</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: var(--text-muted);">실측 면적:</span>
+              <span style="font-family: var(--font-mono); color: var(--clay); font-weight: bold;">16.84 ㎡</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: var(--text-muted);">외곽 둘레:</span>
+              <span style="font-family: var(--font-mono);">17.20 m</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: var(--text-muted);">장축 × 단축:</span>
+              <span style="font-family: var(--font-mono);">4.62 × 3.85 m</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: var(--text-muted);">장축 방향:</span>
+              <span style="font-family: var(--font-mono);">N-32°-E</span>
+            </div>
+          </div>
+        </div>
+
+      </aside>
+
+    </div>
+
+    <!-- 6. Status Bar (32px) -->
+    <div class="status-bar">
+      <div class="status-left">
+        <span style="color: var(--text-main);">펜: 클릭하여 꺾은점, 드래그하여 매끄러운 곡선</span>
+        <span style="color: var(--border-light);">|</span>
+        <span>고른 선: 1개 (굴광선)</span>
+      </div>
+      <div class="status-right">
+        <span>스냅: <strong>격자점(점토)</strong></span>
+        <span>TM 실제좌표: <strong class="status-tm">X=194,520.12m Y=542,108.45m</strong></span>
+        <span>표고: <strong style="color: #eadbb6;">EL=152.48m</strong></span>
+      </div>
+    </div>
+
+    <!-- Modal Simulation: Batch Weights Dialog (J005) -->
+    <div id="weights-modal" class="weights-modal-overlay">
+      <div class="modal-header">
+        <span>모든 굵기 한 번에 변환</span>
+        <span style="cursor: pointer; color: var(--text-muted);" onclick="toggleWeightsModal()">✕</span>
+      </div>
+      <p style="font-size: 11px; color: var(--text-sub); margin-bottom: 10px;">
+        도면 축척 변경 시 모든 범례 및 도면 요소의 선 굵기를 일괄 조정합니다.
+      </p>
+      <div style="display: flex; gap: 6px; margin-bottom: 12px;">
+        <button style="flex: 1; padding: 6px; background: var(--clay); color: #fff; border: none; border-radius: 4px; font-size: 11px; font-weight: 600;">비율 (×0.8)</button>
+        <button style="flex: 1; padding: 6px; background: var(--bg-card); color: var(--text-sub); border: 1px solid var(--border); border-radius: 4px; font-size: 11px;">값 지정</button>
+        <button style="flex: 1; padding: 6px; background: var(--bg-card); color: var(--text-sub); border: 1px solid var(--border); border-radius: 4px; font-size: 11px;">한 단계 가늘게</button>
+      </div>
+      <div style="font-size: 10px; color: var(--caution); background: var(--caution-wash); padding: 6px 8px; border-radius: 4px; margin-bottom: 12px;">
+        선 14개와 범례 5개가 함께 변경됩니다. ⌘Z 한 번으로 완전히 되돌릴 수 있습니다.
+      </div>
+      <button style="width: 100%; padding: 8px; background: var(--clay); color: #fff; border: none; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer;" onclick="toggleWeightsModal()">
+        일괄 적용하기
+      </button>
+    </div>
+
+  </main>
+
+  <!-- TAB 2: System Architecture -->
+  <section id="tab-architecture" class="doc-page">
+    <h2>⚙️ Trowel CAD 시스템 계층 구조 및 데이터 흐름</h2>
+    <p>어도비 의존성을 완전히 배제한 클린룸 러스트(Rust) 기반 고성능 벡터 도면 엔진입니다.</p>
+
+    <div class="grid-2">
+      <div class="card-doc">
+        <h3>1. 레이어 계층 아키텍처</h3>
+        <ul>
+          <li><strong>UI Layer (crates/ui-egui)</strong>: 즉시 모드 GUI, Trowel 1600×988 레이아웃, Quiet Plate 테마 토큰.</li>
+          <li><strong>Command Engine (crates/engine)</strong>: 모든 사용자 행동을 커맨드(`cmd/*`)로 캡슐화, 단일 실행 취소(Undo) 스택.</li>
+          <li><strong>Document Model (crates/doc)</strong>: 노드 트리 기반 벡터 객체, 범례-레이어 동기화 메타데이터.</li>
+          <li><strong>Geometry & Pathops (crates/geom, pathops)</strong>: 불리언 연산, 빗금 교차 계산, 오프셋 클리핑.</li>
+          <li><strong>Export Subsystem (crates/pdf, cad)</strong>: 출판급 벡터 PDF(QPdfWriter/krilla), 좌표 보존 DXF(CP949).</li>
+        </ul>
+      </div>
+
+      <div class="card-doc">
+        <h3>2. 고고학 전문 데이터 파이프라인</h3>
+        <ul>
+          <li><strong>TM 좌표계 파이프라인</strong>: 로컬 캔버스 좌표 ↔ EPSG:5186/5187 실좌표 양방향 무손실 변환.</li>
+          <li><strong>스캔 아핀 정합</strong>: 방안지 2점/4점 기준점 기반 회전각 및 축척 왜곡 자동 보정.</li>
+          <li><strong>자동 빗금 알고리즘</strong>: 면 경계 탐색 후 0.8pt 외곽선 추출 + 0.1pt 빗금 채움 + 맞닿은 면 90° 엇갈림.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB 3: Backlog Roadmap -->
+  <section id="tab-roadmap" class="doc-page">
+    <h2>📋 Trowel 완성 실행 로드맵 (Phase 1 ~ Phase 4)</h2>
+    <p>백로그(`factory/backlog.md`) 순서에 입각한 주도적 완성 일정표입니다.</p>
+
+    <div class="grid-2">
+      <div class="card-doc">
+        <h3 style="color: var(--clay);">Phase 1: 드로잉 코어 완성 (현재 착수)</h3>
+        <ul>
+          <li><strong>J014 그리기 팔레트와 빗금</strong>: 굵기 사다리 칩, 빗금 4종, 「잘린 면(0.8+0.1)」 원클릭 생성.</li>
+          <li><strong>J002b 스프링 로드 Z 돋보기</strong>: Z키 누르고 있는 동안 임시 줌, 놓으면 이전 도구 복귀.</li>
+        </ul>
+      </div>
+
+      <div class="card-doc">
+        <h3>Phase 2: 도면 템플릿 & 실좌표 인프라</h3>
+        <ul>
+          <li><strong>J004 홈 화면 및 견본 4종</strong>: 평면·단면·유물·도판 규격 템플릿.</li>
+          <li><strong>J006 축척 & TM 실제 좌표</strong>: 1:10~1:100 도면 축척, 국토 표준 EPSG:5186 연동.</li>
+          <li><strong>J015 해발선 자동 생성</strong>: 50cm/10cm 등고선 수치 자동 계산 및 단면선 클리핑.</li>
+          <li><strong>J007 좌표 보존 DXF 가져오기</strong>: desca 단면 레이어 맵핑 및 CP949 인코딩 처리.</li>
+        </ul>
+      </div>
+
+      <div class="card-doc">
+        <h3>Phase 3: 고고학 전문 화면 & 태블릿 펜</h3>
+        <ul>
+          <li><strong>J016 / J017 펜·태블릿 입력 완성</strong>: 와콤/XP-Pen 필압 및 펜 제스처 지원, 손바닥 터치 방지.</li>
+          <li><strong>J008 스캔 밑그림 맞추기</strong>: 2점/4점 클릭 아핀 정합.</li>
+          <li><strong>J009 평면 도구</strong>: 단면 위치선(⇧A), 표고 기호(⇧Z), 주혈 깊이, 경사 방향, 면적 자동 계산.</li>
+          <li><strong>J010 단면·토층 화면</strong>: 토층 경계선, 층위 번호, 토성 설명표.</li>
+          <li><strong>J011 유물 실측·구경 화면</strong>: 1:1 실측, 회전 중심선, 구경 자동 원 피팅.</li>
+        </ul>
+      </div>
+
+      <div class="card-doc">
+        <h3>Phase 4: 출판 도판 & 표준 양식</h3>
+        <ul>
+          <li><strong>J012 도판 조판 & PDF 내보내기</strong>: 방위표, 축척 막대, 표제란, 자동 범례표 배치.</li>
+          <li><strong>J018 양식 파일 (.trowel-style)</strong>: 사용자 표준 양식 저장 및 공유.</li>
+          <li><strong>J019 Strata 발굴 GPKG 연동</strong>: 현장 조사 파일 직접 읽기 및 데이터 매핑.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB 4: Superpowers & Dev Environment -->
+  <section id="tab-superpowers" class="doc-page">
+    <h2>🛠️ 개발 환경 설정 및 슈퍼파워 스킬·MCP·훅스 구성</h2>
+    <p>개발 전 과정에서 완전 자동화된 품질 관리와 에이전트 지능형 개발 환경을 보장합니다.</p>
+
+    <div class="grid-2">
+      <div class="card-doc">
+        <h3>1. 슈퍼파워 스킬(Superpowers Skills) 연동</h3>
+        <ul>
+          <li><strong>brainstorming</strong>: 기능 기획 전 사용자 요구사항의 핵심 의도 파악.</li>
+          <li><strong>writing-plans & executing-plans</strong>: 엄격한 TDD 검증 기준을 갖춘 단계별 작업 계획 수립 및 실행.</li>
+          <li><strong>test-driven-development</strong>: 코드 작성 전 반드시 테스트를 먼저 작성하여 회귀 결함 원천 차단.</li>
+          <li><strong>verification-before-completion</strong>: 완료 보고 전 실제 빌드 및 테스트 로그로 증거 기반 확인.</li>
+        </ul>
+      </div>
+
+      <div class="card-doc">
+        <h3>2. 자동화 훅(Hooks) & MCP 서버 구성</h3>
+        <ul>
+          <li><strong>.agents/hooks.json</strong>: 파일 수정(`replace_file_content`/`write_to_file`) 즉시 `rustfmt`를 자동 실행하여 코드 스타일 무결성 유지.</li>
+          <li><strong>.agents/mcp_config.json</strong>:
+            <br>• `rea`: 바이너리 역공학 및 정밀 분석 MCP 연동
+            <br>• `vectorcraft`: 네이티브 문서 검사, 제어 명령 실행 MCP 연동
+          </li>
+          <li><strong>.cargo/config.toml</strong>: `debug = 0` 프로파일을 설정하여 빌드 속도 5배 가속 및 디스크 초과 방지.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    function switchTab(tabId) {
+      document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+
+      document.getElementById('tab-mockup').style.display = 'none';
+      document.getElementById('tab-architecture').style.display = 'none';
+      document.getElementById('tab-roadmap').style.display = 'none';
+      document.getElementById('tab-superpowers').style.display = 'none';
+
+      if (tabId === 'mockup') {
+        document.getElementById('tab-mockup').style.display = 'flex';
+      } else {
+        document.getElementById('tab-' + tabId).style.display = 'block';
+      }
+    }
+
+    function toggleWeightsModal() {
+      const modal = document.getElementById('weights-modal');
+      modal.style.display = (modal.style.display === 'block') ? 'none' : 'block';
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "rea": {
+      "command": "/Users/kwon/.gemini/antigravity-cli/mcp/rea/run",
+      "args": [],
+      "description": "Reverse Engineer Anything (REA) - inspection and binary analysis server"
+    },
+    "vectorcraft": {
+      "command": "cargo",
+      "args": ["run", "--release", "-p", "vectorcraft-cli", "--", "mcp"],
+      "description": "VectorCraft Native MCP Server - live document inspection, tool invocation, and command execution"
+    }
+  }
+}
