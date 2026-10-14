@@ -4502,7 +4502,9 @@ trowel	Barrel Active	옆버튼 동작
 	Default Style Template	기본 스타일 서식
 	Export Trowel Style	Trowel 스타일 내보내기
 	Get My Default Style	내 기본 스타일 가져오기
+	Import Strata GPKG Survey Data	Strata GPKG 조사 데이터 가져오기
 	Import Trowel Style	Trowel 스타일 불러오기
+	Inspect Strata GPKG File	Strata GPKG 파일 검사
 	Set My Default Style	내 기본 스타일로 지정
 trowel	Add custom stroke weight	사용자 선 굵기 추가
 trowel	Added custom stroke weight {w} pt	사용자 선 굵기 {w} pt를 추가했습니다

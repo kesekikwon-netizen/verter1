@@ -4172,5 +4172,7 @@ lighting	Light	ライト
 	Default Style Template	デフォルトスタイルテンプレート
 	Export Trowel Style	Trowelスタイルを書き出し
 	Get My Default Style	マイデフォルトスタイルを取得
+	Import Strata GPKG Survey Data	Strata GPKG調査データを読み込み
 	Import Trowel Style	Trowelスタイルを読み込み
+	Inspect Strata GPKG File	Strata GPKGファイルを検査
 	Set My Default Style	マイデフォルトスタイルに設定

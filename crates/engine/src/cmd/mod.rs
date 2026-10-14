@@ -71,6 +71,7 @@ mod select;
 pub(crate) mod shaper;
 pub mod sheettools;
 pub(crate) mod slices;
+pub mod strata_gpkg;
 pub mod stratatools;
 mod stroke;
 mod style;
@@ -296,6 +297,7 @@ pub fn command_specs() -> &'static [CommandSpec] {
         v.extend(artifacttools::specs());
         v.extend(sheettools::specs());
         v.extend(trowelstyle::specs());
+        v.extend(strata_gpkg::specs());
         v
     })
 }

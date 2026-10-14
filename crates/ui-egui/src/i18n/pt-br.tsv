@@ -2811,5 +2811,7 @@ lighting	Light	Luz
 	Default Style Template	Modelo de estilo padrão
 	Export Trowel Style	Exportar estilo Trowel
 	Get My Default Style	Obter meu estilo padrão
+	Import Strata GPKG Survey Data	Importar dados de levantamento GPKG do Strata
 	Import Trowel Style	Importar estilo Trowel
+	Inspect Strata GPKG File	Inspecionar arquivo GPKG do Strata
 	Set My Default Style	Definir como meu estilo padrão

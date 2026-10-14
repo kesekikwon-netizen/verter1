@@ -3190,3 +3190,113 @@ fn test_j018_style_and_legend_table_integration() {
     let leg_res = h.app.run("sheet.generateLegendTable", json!({ "used_only": true })).unwrap();
     assert!(leg_res["rows"].as_u64().unwrap_or(0) >= 1);
 }
+
+#[test]
+#[cfg(not(target_arch = "wasm32"))]
+fn test_j019_strata_gpkg_integration() {
+    let mut h = Harness::sized(1600.0, 1400.0);
+    let pit = legend_row(&mut h, "유구_면", json!({ "weight": 0.8, "line": "solid" }));
+    h.settle();
+
+    // 1. Open row editor card
+    let row_id = wid("legend-row", pit.0);
+    h.double_click(row_id);
+    h.settle();
+    assert!(h.rect(wid("row-card", ())).is_some(), "row card should be open");
+
+    // 2. Interactive Strata selector: initially None
+    let strata_btn = wid("card-strata", ());
+    assert!(h.rect(strata_btn).is_some());
+
+    // Click once: cycles from None to survey_area
+    h.click(strata_btn);
+    h.settle();
+    let doc = &h.app.session.active().unwrap().doc;
+    assert_eq!(doc.node(pit).unwrap().legend().unwrap().strata.as_deref(), Some("survey_area"));
+
+    // Click again: cycles from survey_area to feature_poly
+    h.click(strata_btn);
+    h.settle();
+    let doc = &h.app.session.active().unwrap().doc;
+    assert_eq!(doc.node(pit).unwrap().legend().unwrap().strata.as_deref(), Some("feature_poly"));
+
+    // 3. Create a temporary GPKG database and import feature_poly features
+    let tmp_dir = std::env::temp_dir();
+    let nanos = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos();
+    let gpkg_path = tmp_dir.join(format!("test_j019_{nanos}.gpkg"));
+
+    {
+        let conn = rusqlite::Connection::open(&gpkg_path).unwrap();
+        conn.execute_batch(
+            "CREATE TABLE gpkg_spatial_ref_sys (
+                srs_name TEXT NOT NULL,
+                srs_id INTEGER NOT NULL PRIMARY KEY,
+                organization TEXT NOT NULL,
+                organization_coordsys_id INTEGER NOT NULL,
+                definition TEXT NOT NULL,
+                description TEXT
+            );
+            INSERT INTO gpkg_spatial_ref_sys VALUES ('Korea 2000 / Central Belt 2010', 5186, 'EPSG', 5186, 'PROJCS...', 'Korea Central');
+            CREATE TABLE gpkg_contents (
+                table_name TEXT NOT NULL PRIMARY KEY,
+                data_type TEXT NOT NULL,
+                identifier TEXT,
+                description TEXT,
+                last_change TEXT NOT NULL DEFAULT '',
+                min_x DOUBLE,
+                min_y DOUBLE,
+                max_x DOUBLE,
+                max_y DOUBLE,
+                srs_id INTEGER
+            );
+            INSERT INTO gpkg_contents (table_name, data_type, min_x, min_y, max_x, max_y, srs_id)
+            VALUES ('feature_poly', 'features', 148000.0, 98000.0, 148100.0, 98100.0, 5186);
+
+            CREATE TABLE feature_poly (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                geom BLOB,
+                kind TEXT,
+                era TEXT,
+                no TEXT,
+                hatch TEXT
+            );",
+        )
+        .unwrap();
+
+        // Build a GPKG binary header + WKB polygon
+        let mut blob = vec![0x47, 0x50, 0, 0, 0x8A, 0x14, 0, 0]; // GP, flags=0, srs_id=5186 LE
+        blob.extend_from_slice(&[1, 3, 0, 0, 0]); // LE, type 3
+        blob.extend_from_slice(&1u32.to_le_bytes()); // 1 ring
+        blob.extend_from_slice(&4u32.to_le_bytes()); // 4 points
+        for &(x, y) in &[(148010.0f64, 98010.0f64), (148050.0f64, 98010.0f64), (148050.0f64, 98050.0f64), (148010.0f64, 98010.0f64)] {
+            blob.extend_from_slice(&x.to_le_bytes());
+            blob.extend_from_slice(&y.to_le_bytes());
+        }
+
+        conn.execute(
+            "INSERT INTO feature_poly (geom, kind, era, no, hatch) VALUES (?1, ?2, ?3, ?4, ?5)",
+            rusqlite::params![blob, "주거지", "원삼국", "1호", "45"],
+        )
+        .unwrap();
+    }
+
+    // Inspect
+    let insp = h.app.run("strata.inspectGpkg", json!({ "path": gpkg_path.to_str().unwrap() })).unwrap();
+    assert_eq!(insp["srs_id"], 5186);
+    assert_eq!(insp["tables"][0]["count"], 1);
+
+    // Import
+    let imp = h.app.run("strata.importGpkg", json!({ "path": gpkg_path.to_str().unwrap(), "apply_hatch": true })).unwrap();
+    assert_eq!(imp["imported_features"], 1);
+
+    // Verify features landed on the pit layer which matched strata == "feature_poly"
+    let doc = &h.app.session.active().unwrap().doc;
+    let pit_node = doc.node(pit).unwrap();
+    assert!(pit_node.children().is_some_and(|c| !c.is_empty()), "imported polygon should be added under pit layer");
+
+    let _ = std::fs::remove_file(&gpkg_path);
+
+    // Close card
+    h.click(wid("card-close", ()));
+    h.settle();
+}

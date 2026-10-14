@@ -4133,5 +4133,7 @@ theme	Appearance	Erscheinungsbild
 	Default Style Template	Standard-Stilvorlage
 	Export Trowel Style	Trowel-Stil exportieren
 	Get My Default Style	Meinen Standardstil abrufen
+	Import Strata GPKG Survey Data	Strata-GPKG-Vermessungsdaten importieren
 	Import Trowel Style	Trowel-Stil importieren
+	Inspect Strata GPKG File	Strata-GPKG-Datei untersuchen
 	Set My Default Style	Als meinen Standardstil festlegen

@@ -174,7 +174,42 @@ fn look(ui: &mut Ui, row: &Row, t: &Tokens, asks: &mut Vec<Ask>) {
         },
         None => tw!("None").to_string(),
     };
-    card::field_soon(ui, wid("card-strata", ()), r, &strata, true, (tw!("Choose a Strata Layer"), "J019"), t);
+    let resp = ui.interact(r, wid("card-strata", ()), Sense::click());
+    let hovered = resp.hovered();
+    let fill = if hovered { t.hover } else { t.input };
+    let border = if hovered { t.text } else { t.input_border };
+    field_box(ui, r, fill, border);
+    let right = r.right() - 8.0 - 8.0 - 4.0;
+    let ink = if legend.strata.is_some() { t.text } else { t.text_dim };
+    text_to(ui, pos2(r.left() + 8.0, r.center().y), right, &strata, font(11.0), ink);
+    triangle(ui, pos2(r.right() - 8.0 - 3.5, r.center().y), 7.0, true, t.text_dim);
+    let resp = resp.on_hover_text(tw!("Choose a Strata Layer"));
+    if resp.clicked() {
+        let next_key = match legend.strata.as_deref() {
+            None => Some(STRATA[0].0),
+            Some(curr) => match STRATA.iter().position(|(k, _)| *k == curr) {
+                Some(idx) if idx + 1 < STRATA.len() => Some(STRATA[idx + 1].0),
+                _ => None,
+            },
+        };
+        asks.push(Ask::Set(match next_key {
+            Some(k) => json!({ "strata": k }),
+            None => json!({ "strata": serde_json::Value::Null }),
+        }));
+    } else if resp.secondary_clicked() {
+        let prev_key = match legend.strata.as_deref() {
+            None => Some(STRATA[STRATA.len() - 1].0),
+            Some(curr) => match STRATA.iter().position(|(k, _)| *k == curr) {
+                Some(0) => None,
+                Some(idx) => Some(STRATA[idx - 1].0),
+                _ => None,
+            },
+        };
+        asks.push(Ask::Set(match prev_key {
+            Some(k) => json!({ "strata": k }),
+            None => json!({ "strata": serde_json::Value::Null }),
+        }));
+    }
     let r = card::row(ui, "", 18.0, t);
     text(ui, r.left_center(), Align2::LEFT_CENTER, tw!("This row is the layer"), font(12.0), t.text_dim);
     // Weight: a palette weight, points typed, or none. A chip pressed as the typing ends wins, then

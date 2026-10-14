@@ -3589,5 +3589,7 @@ lighting	Light	光源
 	Default Style Template	預設樣式範本
 	Export Trowel Style	匯出 Trowel 樣式
 	Get My Default Style	取得我的預設樣式
+	Import Strata GPKG Survey Data	匯入 Strata GPKG 調查資料
 	Import Trowel Style	匯入 Trowel 樣式
+	Inspect Strata GPKG File	檢查 Strata GPKG 檔案
 	Set My Default Style	設為我的預設樣式

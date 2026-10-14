@@ -25,6 +25,6 @@
 | 14 | J012 | 도판과 PDF | done | 명세 `jobs/J012-sheet-and-pdf.md`. 도북 방위, 복합 축척 막대(SCALE 1:S), 국가유산 정규 표제란(4행 삼선표), 자동 추출 범례표, 도판 메타데이터 속성 연동, 컨트롤 바 퀵 단추, cargo xtask ci 7개 전체 관문 통과. | 축척 막대 길이 → 사람 검토 |
 | 15 | J017 | 펜 2단계 | done | 명세 `jobs/J017-pen-tablet-stage2.md`. B1–B4: 지우개 끝 자동 반전, 펜 1/2번 옆버튼 할당, 손바닥 거르기(600ms 펜 우선), 기울기 감지 및 대화형 상태 표시. `cargo xtask ci` 7개 전체 관문 통과. | 실제 펜 확인 |
 | 16 | J018 | 양식 파일과 범례표 저절로 ◆ | done | 명세 `jobs/J018-style-and-legend-table.md`. .trowel-style 서식 내보내기/가져오기 및 diff 비교, 「내 기본값」 환경설정 연동, 사용자 정의 선 굵기 팔레트 등록 및 칩 표시, 쓴 줄만 범례표 추출 (`used_only: true`), 10개 언어 번역 완료. `cargo xtask ci` 7개 전체 관문 통과. | ◆ 파일 형식 |
-| 17 | J019 | Strata 조사 파일(GPKG) 읽기 ◆ | queued | 읽기 전용, 레이어 키로 짝, 종류·시대·번호·uid, 유구배치도 종류 빗금(값만 다시 적음) | ◆ 의존성(SQLite, 데스크톱만)·파일 형식 |
+| 17 | J019 | Strata 조사 파일(GPKG) 읽기 ◆ | done | 명세 `jobs/J019-strata-gpkg-reader.md`. OGC GPKG(SQLite 3) 읽기, WKB 지오메트리 파서(점/선/다각형/멀티), TM 좌표 투영, Strata 레이어 매핑(조사구역/시굴격자/유구면/유구선/단면선/기준점/유물), 유구배치도 빗금 자동부여, 행 편집기 Strata 레이어 선택기 대화형 연동. `cargo xtask ci` 7개 전체 관문 통과. | ◆ 의존성(SQLite, 데스크톱만)·파일 형식 |
 
 규칙(요약): 명세 없이 build로 가지 않는다. verify는 `cargo fmt --all -- --check` → `cargo clippy --workspace --all-targets -- -D warnings` → 손댄 크레이트 `cargo test -p …` → `cargo xtask ci` 순서이고 종료 코드를 기록한다. 작업 브랜치에 올리면 깃허브 액션 「Trowel CI」(J013)가 같은 관문과 윈도우 빌드를 러너에서 돌린다. rework는 최대 2회, 그 뒤 `needs-human`. 기록 형식은 `jobs/README.md`.
